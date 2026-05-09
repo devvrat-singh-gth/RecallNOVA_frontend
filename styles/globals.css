@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+/* 🎯 THEME VARIABLES */
+:root {
+  --bg: #ffffff;
+  --text: #111111;
+  --card: #f5f5f5;
+  --border: #e5e5e5;
+  --primary: #111111;
+}
+
+/* 🌙 DARK */
+.dark {
+  --bg: #0f0f0f;
+  --text: #ffffff;
+  --card: #1a1a1a;
+  --border: #2a2a2a;
+  --primary: #ffffff;
+}
+
+/* 🌿 MINT */
+.mint {
+  --bg: #e6fff9;
+  --text: #00332d;
+  --card: #ccfff2;
+  --border: #99f6e4;
+  --primary: #00b894;
+}
+
+/* ⚡ NEON */
+.neon {
+  --bg: #000000;
+  --text: #39ff14;
+  --card: #050505;
+  --border: #39ff14;
+  --primary: #39ff14;
+}
+
+/* BASE */
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* 🎨 COMPONENT STYLES */
+.card {
+  @apply rounded-xl p-4 shadow-sm;
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+
+.input {
+  @apply p-2 rounded w-full;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.btn-primary {
+  @apply px-4 py-2 rounded-lg transition;
+  background: var(--primary);
+  color: var(--bg);
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 rounded-lg;
+  border: 1px solid var(--border);
+}
+.card {
+  @apply bg-white dark:bg-gray-900 p-4 rounded-xl shadow border;
+}
+
+.container {
+  @apply max-w-5xl mx-auto p-6;
+}
+/* 🔥 GLASS EFFECT */
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* DARK GLASS */
+.dark .glass {
+  background: rgba(255, 255, 255, 0.05);
+}
+/* 🔥 THEME SCROLLBAR VARIABLES */
+
+:root {
+  --scroll-thumb: rgba(120,120,120,0.45);
+  --scroll-thumb-hover: rgba(80,80,80,0.7);
+  --scroll-track: rgba(0,0,0,0.04);
+}
+
+/* 🌙 DARK */
+.dark {
+  --scroll-thumb: rgba(163,230,53,0.45);
+  --scroll-thumb-hover: rgba(163,230,53,0.8);
+  --scroll-track: rgba(255,255,255,0.04);
+}
+
+/* 🌿 MINT */
+.mint {
+  --scroll-thumb: rgba(16,185,129,0.45);
+  --scroll-thumb-hover: rgba(16,185,129,0.75);
+  --scroll-track: rgba(0,0,0,0.03);
+}
+
+/* ⚡ NEON */
+.neon {
+  --scroll-thumb: rgba(57,255,20,0.55);
+  --scroll-thumb-hover: rgba(57,255,20,0.95);
+  --scroll-track: rgba(57,255,20,0.05);
+}
+
+/* 🔥 MODERN SCROLLBAR */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+  border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color:
+    var(--scroll-thumb)
+    var(--scroll-track);
+}
+/* 🔥 CHAT MESSAGE ANIMATION */
+
+@keyframes fadeIn {
+
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,36 +1,128 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+RecallNova Frontend
 
-## Getting Started
+RecallNova is an AI-powered document learning platform that transforms PDFs into interactive learning experiences through AI chat, flashcards, and quizzes.
 
-First, run the development server:
+Built with a scalable frontend architecture using Next.js 16, React 19, TypeScript, and TailwindCSS.
 
-```bash
+Features
+AI-powered document chat
+PDF upload and document management
+Flashcard generation
+Dynamic quiz generation
+Quiz progress persistence
+Learning-focused UI/UX
+Responsive desktop + mobile layout
+Theme engine with multiple themes
+Settings persistence using localStorage
+Modular scalable component architecture
+Backend API integration
+Production-ready routing structure
+Tech Stack
+Frontend
+Next.js 16
+React 19
+TypeScript
+TailwindCSS v4
+UI/UX
+Responsive layout system
+Dark/light custom themes
+Component-based architecture
+AI Integration
+FastAPI backend integration
+AI chat workflows
+Quiz and flashcard generation
+Project Structure
+recallnova/
+├── app/
+├── components/
+├── lib/
+├── public/
+├── styles/
+├── next.config.ts
+├── tailwind.config.ts
+└── package.json
+Screenshots
+Home
+
+Add screenshot here:
+
+![Home](public/home-preview.png)
+Chat
+![Chat](public/chat-preview.png)
+Quiz
+![Quiz](public/quiz-preview.png)
+Environment Variables
+
+Create a .env.local file:
+
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+
+Production:
+
+NEXT_PUBLIC_API_URL=https://your-render-backend.onrender.com
+Installation
+git clone <repo-url>
+
+cd recallnova
+
+npm install
+Run Development Server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Frontend runs on:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+http://localhost:3000
+Production Build
+npm run build
+npm start
+Backend Dependency
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This frontend requires the RecallNova FastAPI backend.
 
-## Learn More
+Backend handles:
 
-To learn more about Next.js, take a look at the following resources:
+AI chat
+PDF processing
+Quiz generation
+Flashcards
+Storage
+Retrieval workflows
+Current Architecture
+Core Modules
+Chat System
+Learning System
+Quiz Engine
+Flashcard Engine
+Upload Manager
+Theme System
+Settings Persistence
+Future Roadmap
+Authentication system
+Real-time streaming responses
+Multi-document chat
+AI memory system
+Team workspaces
+SaaS subscription plans
+AI study analytics
+OCR support
+Vector database retrieval
+Advanced semantic search
+AI-generated study plans
+Deployment
+Frontend
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Recommended:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Vercel
+Backend
 
-## Deploy on Vercel
+Recommended:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Render
+Author
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built as a scalable AI learning platform focused on modern educational workflows and production-ready architecture.
+
+License
+
+MIT License
