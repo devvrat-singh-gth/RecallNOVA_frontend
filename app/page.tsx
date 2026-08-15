@@ -1,28 +1,43 @@
-import Link from "next/link";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="h-screen flex flex-col items-center justify-center bg-black text-white">
-      <h1 className="text-4xl font-bold mb-4">RecallNova</h1>
-      <p className="mb-6 text-gray-400 text-center max-w-md">
-        Turn your PDFs into AI-powered learning — chat, flashcards, and quizzes.
-      </p>
+import PublicLanding from "@/components/home/PublicLanding";
+import AuthenticatedHome from "@/components/home/AuthenticatedHome";
+import AuthenticatedHomeShell from "@/components/home/AuthenticatedHomeShell";
+import { useAuth } from "@/components/auth/AuthProvider";
 
-      <div className="flex gap-4">
-        <Link
-          href="/chat"
-          className="bg-white text-black px-6 py-2 rounded"
-        >
-          Start Chatting
-        </Link>
+export default function RootHomePage() {
+  const {
+    user,
+    loading,
+  } = useAuth();
 
-        <Link
-          href="/upload"
-          className="border border-white px-6 py-2 rounded"
-        >
-          Upload Docs
-        </Link>
+  if (loading) {
+    return (
+      <div
+        className="
+          flex
+          h-[100dvh]
+          w-full
+          items-center
+          justify-center
+          bg-[var(--bg)]
+          text-[var(--text)]
+        "
+      >
+        <div className="text-sm opacity-60">
+          Loading RecallNova...
+        </div>
       </div>
-    </div>
+    );
+  }
+
+  if (!user) {
+    return <PublicLanding />;
+  }
+
+  return (
+    <AuthenticatedHomeShell>
+      <AuthenticatedHome />
+    </AuthenticatedHomeShell>
   );
 }

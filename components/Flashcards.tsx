@@ -2,6 +2,14 @@
 
 import { useState, useEffect } from "react";
 import {
+  FileText,
+  Play,
+  RotateCw,
+  Brain,
+  Sparkles,
+  Clock3
+} from "lucide-react";
+import {
   getFlashcards,
   getDocuments,
   checkFlashcards,
@@ -90,22 +98,35 @@ const absoluteIndex =
   w-full
   px-3
   sm:px-5
-  lg:px-8
+  lg:px-4
   py-4
   sm:py-6
 ">
-    <div className="
-      max-w-6xl
-      w-full
-      mx-auto
-      rounded-3xl
-      border
-      border-white/10
-      bg-white/[0.04]
-      backdrop-blur-xl
-      shadow-2xl
-      overflow-hidden
-    ">
+<div className="
+  max-w-7xl
+  w-full
+  mx-auto
+
+  rounded-3xl
+
+  border
+  border-white/10
+
+  bg-white/[0.04]
+  backdrop-blur-xl
+
+  shadow-2xl
+
+  overflow-hidden
+
+  max-h-[calc(100vh-90px)]
+  md:max-h-none
+
+  overflow-y-auto
+  overscroll-contain
+
+  custom-scrollbar
+">
 
       {/* HEADER */}
 
@@ -178,8 +199,7 @@ onClick={() => {
           {/* TABLE HEADER */}
 
           <div className="
-            flex
-            flex-col
+hidden
             md:grid
             md:grid-cols-12
             px-4
@@ -228,160 +248,301 @@ onClick={() => {
 
               return (
 
-                <div
-                  key={d._id}
-                  className="
-                    grid
-                    grid-cols-12
-                    items-center
-                    px-4
-                    py-4
-                    rounded-2xl
-                    border
-                    border-white/5
-                    bg-white/[0.025]
-                    hover:bg-white/[0.05]
-                    transition-all
-                    duration-200
-                  "
-                >
+               <div
+  key={d._id}
+  className="
+    md:grid
+    md:grid-cols-12
+    md:items-center
 
-                  {/* DOC */}
+    rounded-2xl
 
-                  <div className="
-                    col-span-5
-                    pr-3
-                  ">
+    border
+    border-white/10
 
-                    <div className="
-                      font-semibold
-                      truncate
-                    ">
-                      {d.name}
-                    </div>
+    bg-white/[0.03]
 
-                  </div>
+    p-3
+    md:px-4
+    md:py-4
 
-                  {/* STATUS */}
+    hover:bg-white/[0.05]
+    transition-all
+  "
+>
 
-                  <div className="
-                    col-span-2
-                    flex
-                    justify-center
-                  ">
+  {/* DOCUMENT */}
 
-                    <span className={`
-                      px-3
-                      py-1
-                      rounded-full
-                      text-xs
-                      font-bold
-                      border
+  <div className="md:col-span-5">
 
-                      ${
-                        exists
-                          ? `
-                            bg-green-500/10
-                            text-green-300
-                            border-green-400/20
-                          `
-                          : `
-                            bg-gray-500/10
-                            text-gray-300
-                            border-gray-400/20
-                          `
-                      }
-                    `}>
+    {/* MOBILE */}
 
-                      {exists
-                        ? "Available"
-                        : "Not Generated"}
+    <div
+      className="
+        flex
+        items-start
+        gap-3
 
-                    </span>
+        md:hidden
+      "
+    >
 
-                  </div>
+      <div
+        className="
+          h-9
+          w-9
 
-                  {/* COUNT */}
+          rounded-xl
 
-                  <div className="
-                    col-span-2
-                    text-center
-                    font-bold
-                    text-sm
-                  ">
-                    {count}
-                  </div>
+          bg-blue-500/15
 
-                  {/* ACTIONS */}
+          flex
+          items-center
+          justify-center
 
-                  <div className="
-                    col-span-3
-                    flex
-                    justify-center
-                    gap-2
-                  ">
+          shrink-0
+        "
+      >
+    <FileText size={16} />
+      </div>
 
-                    <button
-                      onClick={() =>
-                        generate(10, d._id)
-                      }
-                      className={`
-                        px-4
-                        py-2
-                        rounded-xl
-                        text-xs
-                        font-bold
-                        transition
+      <div className="flex-1 min-w-0 pt-2">
 
-                        ${
-                          exists
-                            ? `
-                              bg-green-500
-                              text-black
-                              hover:scale-105
-                            `
-                            : `
-                              bg-blue-500
-                              text-white
-                              hover:bg-blue-600
-                            `
-                        }
-                      `}
-                    >
+        <h3
+          className="
+            font-semibold
+            text-sm
+            truncate
+          "
+        >
+          {d.name}
+        </h3>
 
-                      {exists
-                        ? "Show"
-                        : "Generate"}
+      </div>
 
-                    </button>
+      <div
+        className="
+          flex
+          flex-col
+          gap-1
 
-                    {exists && (
+          items-end
 
-                      <button
-                        onClick={() => {
-                          setPopupDocId(d._id);
-                          setShowPopup(true);
-                        }}
-                        className="
-                          px-4
-                          py-2
-                          rounded-xl
-                          text-xs
-                          font-bold
-                          bg-purple-500
-                          text-white
-                          hover:bg-purple-600
-                          transition
-                        "
-                      >
-                        More
-                      </button>
+          shrink-0
+        "
+      >
 
-                    )}
+        <span
+          className={`
+            px-2.5
+            py-1
 
-                  </div>
+            rounded-full
 
-                </div>
+            text-[10px]
+            font-bold
+
+            ${
+              exists
+                ? `
+                  bg-green-500/15
+                  text-green-300
+                `
+                : `
+                  bg-gray-500/15
+                  text-gray-300
+                `
+            }
+          `}
+        >
+          {exists
+            ? "Available"
+            : "Not Generated"}
+        </span>
+
+        <span
+          className="
+            px-2.5
+            py-1
+
+            rounded-full
+
+            text-[10px]
+            font-bold
+
+            bg-white/5
+          "
+        >
+          {count} Cards
+        </span>
+
+      </div>
+
+    </div>
+
+    {/* DESKTOP */}
+
+    <div
+      className="
+        hidden
+        md:flex
+        items-center
+
+        font-medium
+
+        truncate
+        pr-4
+      "
+    >
+      {d.name}
+    </div>
+
+  </div>
+
+  {/* DESKTOP STATUS */}
+
+  <div
+    className="
+      hidden
+      md:flex
+      md:col-span-2
+      justify-center
+    "
+  >
+
+    <span
+      className={`
+        px-3
+        py-1
+        rounded-full
+        text-xs
+        font-bold
+        border
+
+        ${
+          exists
+            ? `
+              bg-green-500/10
+              text-green-300
+              border-green-400/20
+            `
+            : `
+              bg-gray-500/10
+              text-gray-300
+              border-gray-400/20
+            `
+        }
+      `}
+    >
+      {exists
+        ? "Available"
+        : "Not Generated"}
+    </span>
+
+  </div>
+
+  <div
+    className="
+      hidden
+      md:block
+      md:col-span-2
+
+      text-center
+      font-bold
+      text-sm
+    "
+  >
+    {count}
+  </div>
+
+  {/* ACTIONS */}
+
+  <div
+    className="
+      md:col-span-3
+
+      flex
+      gap-2
+
+      mt-3
+      md:mt-0
+
+      md:justify-center
+      md:items-center
+
+      md:min-h-[40px]
+    "
+  >
+
+    <button
+      onClick={() =>
+        generate(10, d._id)
+      }
+      className={`
+        flex-1
+        md:w-[110px]
+
+        h-10
+
+        rounded-xl
+
+        text-sm
+        font-bold
+
+        transition-all
+
+        ${
+          exists
+            ? `
+              bg-lime-400
+              text-black
+              hover:scale-[1.03]
+            `
+            : `
+              bg-blue-500
+              text-white
+              hover:bg-blue-600
+            `
+        }
+      `}
+    >
+      {exists ? "Show" : "Generate"}
+    </button>
+
+    {exists && (
+
+      <button
+        onClick={() => {
+          setPopupDocId(d._id);
+          setShowPopup(true);
+        }}
+        className="
+          flex-1
+          md:w-[92px]
+
+          h-10
+
+          rounded-xl
+
+          text-sm
+          font-bold
+
+          bg-purple-500
+          text-white
+
+          hover:bg-purple-600
+
+          transition-all
+        "
+      >
+        More
+      </button>
+
+    )}
+
+  </div>
+
+</div>
 
               );
             })}
@@ -410,7 +571,7 @@ onClick={() => {
               Card {page * pageSize + index + 1}
 of {cards.length}
 
-• Learned: {knownCards.length}
+ • Learned: {knownCards.length}
             </div>
 
             <div className="

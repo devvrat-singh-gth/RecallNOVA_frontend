@@ -9,7 +9,14 @@ import {
   getQuiz,
   getQuizProgress,
 } from "@/lib/api";
-
+import {
+  FileText,
+  Play,
+  RotateCw,
+  Brain,
+  Sparkles,
+  Clock3
+} from "lucide-react";
 export default function QuizPage() {
   const router = useRouter();
 
@@ -180,22 +187,40 @@ router.push(
   };
 
   return (
-<div className="
-  w-full
-  max-w-6xl
-  mx-auto
-  mt-10
-  px-3
-  sm:px-5
-  lg:px-0
-  rounded-3xl
-  border
-  border-white/10
-  bg-white/[0.04]
-  backdrop-blur-xl
-  shadow-2xl
-  overflow-hidden
-">
+<div
+  className="
+    w-full
+max-w-6xl
+xl:max-w-7xl
+    mx-auto
+    mt-4
+    md:mt-10
+
+    px-3
+    sm:px-5
+    lg:px-0
+
+    rounded-3xl
+
+    border
+    border-white/10
+
+    bg-white/[0.04]
+    backdrop-blur-xl
+
+    shadow-2xl
+
+    overflow-hidden
+
+    max-h-[calc(100vh-90px)]
+    md:max-h-none
+
+    overflow-y-auto
+    overscroll-contain
+
+    custom-scrollbar
+  "
+>
        <div className="
   flex
   flex-col
@@ -211,21 +236,48 @@ router.push(
 
   <div>
 
-    <h1 className="
-      text-3xl
-      font-black
-      tracking-tight
-    ">
+<div className="flex items-center gap-3">
+
+  <div
+    className="
+      h-12 w-12
+      rounded-2xl
+
+      bg-blue-500/15
+      border
+      border-blue-400/20
+
+      flex
+      items-center
+      justify-center
+    "
+  >
+    <Brain size={24}/>
+  </div>
+
+  <div>
+    <h1
+      className="
+        text-3xl
+        font-black
+        tracking-tight
+      "
+    >
       Quiz
     </h1>
 
-    <p className="
-      text-sm
-      opacity-60
-      mt-1
-    ">
+    <p
+      className="
+        text-sm
+        opacity-60
+        mt-1
+      "
+    >
       Practice smarter using adaptive quiz sessions
     </p>
+  </div>
+
+</div>
 
   </div>
 
@@ -270,105 +322,246 @@ router.push(
             const progress = item?.progress;
 
             return (
-              <div
-                key={d._id}
-className="
-  flex
-  flex-col
-  md:grid
-  md:grid-cols-12
-  items-center
-  px-4
-  py-4
-  rounded-2xl
-  border
-  border-white/5
-  bg-white/[0.025]
-  hover:bg-white/[0.05]
-  transition-all
-  duration-200
-"              >
+            <div
+  key={d._id}
+  className="
+    md:grid
+    md:grid-cols-12
+    md:items-center
 
-<div className="
-  col-span-5
-  flex
-  items-center
-  break-words
-  pr-2
-">                  {d.name}
-                </div>
+    rounded-2xl
 
-              <div className="
-  col-span-2
-  flex
-  justify-center
-">
-
-  <span className={`
-    px-3
-    py-1
-    rounded-full
-    text-xs
-    font-bold
     border
+    border-white/10
 
-    ${
-      exists
-        ? `
-          bg-green-500/10
-          text-green-300
-          border-green-400/20
-        `
-        : `
-          bg-gray-500/10
-          text-gray-300
-          border-gray-400/20
-        `
-    }
-  `}>
+    bg-white/[0.03]
 
-    {exists
-      ? "Available"
-      : "Not Generated"}
+    p-3
+    md:px-4
+    md:py-4
 
-  </span>
+    hover:bg-white/[0.05]
+    transition-all
+  "
+>
+
+<div className="md:col-span-5">
+
+  {/* MOBILE */}
+<div
+  className="
+    flex
+    items-start
+    gap-3
+
+    md:hidden
+  "
+>
+
+  <div
+    className="
+      h-9
+      w-9
+
+      rounded-xl
+
+      bg-blue-500/15
+
+      flex
+      items-center
+      justify-center
+
+      shrink-0
+    "
+  >
+    <FileText size={16} />
+  </div>
+<div className="flex-1 min-w-0 pt-2">
+
+  <h3
+    className="
+      font-semibold
+      text-sm
+      truncate
+    "
+  >
+    {d.name}
+  </h3>
 
 </div>
 
-<div className="
-  col-span-2
-  text-center
-  font-bold
-  text-sm
-">                  {item?.count || 0}
-                </div>
+  <div
+    className="
+      flex
+      flex-col
+      gap-1
 
-<div className="
-  col-span-3
-  flex
-  flex-wrap
-  justify-start
-  md:justify-center
-  gap-2
-  mt-3
-  md:mt-0
-">
+      items-end
+
+      shrink-0
+    "
+  >
+
+    <span
+      className={`
+        px-2.5
+        py-1
+
+        rounded-full
+
+        text-[10px]
+        font-bold
+
+        ${
+          exists
+            ? `
+              bg-green-500/15
+              text-green-300
+            `
+            : `
+              bg-gray-500/15
+              text-gray-300
+            `
+        }
+      `}
+    >
+      {exists
+        ? "Available"
+        : "Not Generated"}
+    </span>
+
+    <span
+      className="
+        px-2.5
+        py-1
+
+        rounded-full
+
+        text-[10px]
+        font-bold
+
+        bg-white/5
+      "
+    >
+      {item?.count || 0} Questions
+    </span>
+
+  </div>
+
+</div>
+{/* DESKTOP DOCUMENT */}
+
+<div
+  className="
+    hidden
+    md:flex
+    md:col-span-5
+
+    items-center
+
+    font-medium
+
+    truncate
+    pr-4
+  "
+>
+  {d.name}
+</div>
+</div>
+
+{/* DESKTOP STATUS */}
+
+<div
+  className="
+    hidden
+    md:flex
+    md:col-span-2
+    justify-center
+  "
+>
+  <span
+    className={`
+      px-3
+      py-1
+      rounded-full
+      text-xs
+      font-bold
+      border
+
+      ${
+        exists
+          ? `
+            bg-green-500/10
+            text-green-300
+            border-green-400/20
+          `
+          : `
+            bg-gray-500/10
+            text-gray-300
+            border-gray-400/20
+          `
+      }
+    `}
+  >
+    {exists ? "Available" : "Not Generated"}
+  </span>
+</div>
+
+<div
+  className="
+    hidden
+    md:block
+    md:col-span-2
+
+    text-center
+    font-bold
+    text-sm
+  "
+>
+  {item?.count || 0}
+</div>
+<div
+  className="
+    md:col-span-3
+
+    flex
+    gap-2
+
+    mt-3
+    md:mt-0
+
+    md:justify-center
+    md:items-center
+
+    md:min-h-[40px]
+  "
+>
                   {progress && !progress.finished && (
                     <button
                       onClick={() =>
                         resumeQuiz(d._id, progress)
                       }
 className="
+  flex-1
+  md:w-[92px]
+
+  h-10
+
   px-4
-  py-2
+
   rounded-xl
-  text-xs
+
+  text-sm
   font-bold
+
   bg-yellow-400
   text-black
-  hover:scale-105
-  transition
-"                    >
+
+  hover:scale-[1.03]
+  active:scale-[0.98]
+
+  transition-all
+"              >
                       Resume
                     </button>
                   )}
@@ -380,16 +573,25 @@ className="
                           handleStartClick(d._id)
                         }
 className="
+  flex-1
+  md:w-[92px]
+
+  h-10
+
   px-4
-  py-2
   rounded-xl
-  text-xs
+
+  text-sm
   font-bold
-  bg-green-500
+
+  bg-lime-400
   text-black
-  hover:scale-105
-  transition
-"                      >
+
+  hover:scale-[1.03]
+  active:scale-[0.98]
+
+  transition-all
+"                   >
                         Start
                       </button>
                     )}
@@ -400,16 +602,26 @@ className="
                         generate(d._id, true)
                       }
 className="
+  flex-1
+  md:w-[130px]
+
+  h-10
+
   px-4
-  py-2
+
   rounded-xl
-  text-xs
+
+  text-sm
   font-bold
+
   bg-blue-500
   text-white
+
   hover:bg-blue-600
-  transition
-"                    >
+  active:scale-[0.98]
+
+  transition-all
+"               >
                       Generate
                     </button>
                   )}
@@ -421,16 +633,26 @@ className="
                         setShowPopup(true);
                       }}
 className="
+  flex-1
+  md:w-[92px]
+
+  h-10
+
   px-4
-  py-2
+
   rounded-xl
-  text-xs
+
+  text-sm
   font-bold
+
   bg-purple-500
   text-white
+
   hover:bg-purple-600
-  transition
-"                    >
+  active:scale-[0.98]
+
+  transition-all
+"                  >
                       More
                     </button>
                   )}

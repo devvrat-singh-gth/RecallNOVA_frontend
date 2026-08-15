@@ -27,11 +27,28 @@ export default function ThemeProvider({ children }: any) {
   }, []);
 
   // 🔥 Apply + persist
-  useEffect(() => {
-document.documentElement.classList.remove("light", "dark", "mint", "neon");
-document.documentElement.classList.add(theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+useEffect(() => {
+
+  document.documentElement.classList.remove(
+    "light",
+    "dark",
+    "mint",
+    "neon"
+  );
+
+  document.documentElement.classList.add(theme);
+
+  document.documentElement.setAttribute(
+    "data-theme",
+    theme
+  );
+
+  localStorage.setItem(
+    "theme",
+    theme
+  );
+
+}, [theme]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>

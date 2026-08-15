@@ -1,96 +1,36 @@
 import "@/styles/globals.css";
-import Sidebar from "@/components/Sidebar";
+
 import ThemeProvider from "@/components/ThemeProvider";
-import SettingsPanel from "@/components/SettingsPanel";
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const googleClientId =
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  if (!googleClientId) {
+    throw new Error(
+      "NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured"
+    );
+  }
 
   return (
-
     <html lang="en">
-
-      <body className="
-        h-screen
-        overflow-hidden
-        bg-black
-        text-white
-      ">
-
+      <body className="h-[100dvh] overflow-hidden">
         <ThemeProvider>
-
-          {/* 🔥 MOBILE HEADER */}
-          <div className="
-            md:hidden
-            flex
-            items-center
-            justify-between
-            px-4
-            py-3
-            border-b
-            border-white/10
-            bg-black
-            sticky
-            top-0
-            z-50
-          ">
-
-            <h1 className="font-semibold">
-              RecallNova
-            </h1>
-
-            <div className="flex gap-3 text-sm">
-              <a href="/chat">Chat</a>
-              <a href="/upload">Upload</a>
-              <a href="/learning">Learn</a>
-            </div>
-
-          </div>
-
-          {/* 🔥 DESKTOP LAYOUT */}
-          <div className="
-            flex
-            h-screen
-            overflow-hidden
-          ">
-
-            {/* SIDEBAR */}
-            <div className="
-              hidden
-              md:flex
-              h-screen
-              flex-shrink-0
-            ">
-              <Sidebar />
-            </div>
-
-            {/* MAIN */}
-            <main className="
-              flex-1
-              h-screen
-              overflow-hidden
-            ">
-
-              <div className="
-                h-full
-                overflow-hidden
-              ">
-                {children}
-              </div>
-
-            </main>
-
-          </div>
-
-          <SettingsPanel />
-
+          <GoogleOAuthProvider
+            clientId={googleClientId}
+          >
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </GoogleOAuthProvider>
         </ThemeProvider>
-
       </body>
-
     </html>
   );
 }
