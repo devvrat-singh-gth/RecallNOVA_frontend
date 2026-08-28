@@ -18,7 +18,7 @@ export function useTheme() {
 }
 
 export default function ThemeProvider({ children }: any) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("dark");
 
   // 🔥 Load saved theme
   useEffect(() => {
