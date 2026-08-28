@@ -2,7 +2,7 @@
 
 RecallNova is an AI-powered document learning workspace that turns uploaded study material into an interactive learning environment.
 
-The frontend provides the user-facing experience for document upload, AI-powered PDF chat, flashcards, quizzes, dashboards, settings, authentication, and responsive workspace navigation.
+The frontend provides the user-facing experience for document upload, AI-powered PDF chat, flashcards, quizzes, dashboards, settings, authentication, guest workspaces, and responsive workspace navigation.
 
 Built with Next.js, React, TypeScript, and Tailwind CSS, with a modular architecture designed to integrate with the RecallNova FastAPI backend.
 
@@ -17,7 +17,7 @@ Upload documents
       ↓
 Retrieve relevant content
       ↓
-Chat with your documents
+Chat with documents
       ↓
 Generate flashcards
       ↓
@@ -26,7 +26,7 @@ Generate quizzes
 Track learning progress
 ```
 
-The frontend communicates with the RecallNova backend through authenticated REST APIs.
+The frontend communicates with the RecallNova backend through a centralized authentication-aware REST API client.
 
 ---
 
@@ -37,10 +37,43 @@ The frontend communicates with the RecallNova backend through authenticated REST
 * Google authentication
 * Email/password authentication
 * Persistent authenticated sessions
-* Access-token based API authentication
-* Refresh-session support
+* JWT access-token authentication
+* HttpOnly refresh-session support
+* Automatic access-token refresh
+* Centralized authentication state
+* Profile drawer
+* Account and settings navigation
 * Protected application experience
-* Profile drawer and authenticated user navigation
+
+### Guest Workspace
+
+* Continue as Guest
+* Persistent guest identity per browser
+* Guest-specific workspace routes
+* Guest document uploads
+* Guest AI chat
+* Guest chat sessions
+* Guest flashcards
+* Guest learning hub
+* Guest-specific limits
+* Guest quiz access restriction
+* Guest-aware navigation
+* Guest workspace restoration while retained by the backend
+
+Guest identity is maintained through:
+
+```text
+localStorage
+└── recallnova_guest_id
+```
+
+The guest access token is stored separately through:
+
+```text
+recallnova_access_token
+```
+
+Guest data retention is ultimately controlled by the backend.
 
 ### Document Workspace
 
@@ -48,6 +81,12 @@ The frontend communicates with the RecallNova backend through authenticated REST
 * Document listing
 * Document deletion
 * Document preview information
+* Document size display
+* Multi-document selection
+* Delete confirmation
+* Upload loading state
+* Workspace loading state
+* Empty workspace state
 * Responsive document management interface
 
 ### AI PDF Chat
@@ -59,34 +98,73 @@ The frontend communicates with the RecallNova backend through authenticated REST
 * Document selection
 * Page-range based retrieval
 * Focused document querying
+* Response caching
+* Rate-limit aware requests
+* Token guarding
+* Responsive chat interface
 
 ### Learning
 
 * AI-generated flashcards
 * AI-generated quizzes
-* Configurable question/card counts
+* Configurable card/question counts
 * Difficulty selection
-* Topic-based learning
+* Topic support
+* Flashcard pagination
+* Known/starred card state
+* Quiz session flow
 * Quiz progress persistence
+* Quiz resume support
+* Guest learning restrictions
 
 ### Dashboard
 
 * Learning statistics
 * Usage information
 * Workspace overview
-* Account-related information
+* Account information
 
 ### User Experience
 
-* Responsive desktop and mobile layouts
-* Authenticated desktop header/navigation
+* Responsive desktop/mobile layouts
+* Guest and authenticated navigation
 * Mobile navigation drawer
 * Profile drawer
-* Multiple application themes
+* Multiple themes
 * Persistent learning preferences
 * Custom scrollbar support
 * Responsive settings interface
-* Adaptive card and content layouts
+* Responsive modals
+* Responsive loading states
+* Dynamic empty states
+* Dynamic guest/auth upload navigation
+
+---
+
+## Theme System
+
+RecallNova uses a centralized `ThemeProvider`.
+
+Supported themes:
+
+```text
+light
+dark
+mint
+neon
+```
+
+Theme state is persisted locally and applied through CSS variables such as:
+
+```text
+--bg
+--text
+--card
+--border
+--primary
+```
+
+Components that depend on application colors should use the theme variables instead of hard-coded theme colors where practical.
 
 ---
 
@@ -102,22 +180,25 @@ The frontend communicates with the RecallNova backend through authenticated REST
 ### UI
 
 * Lucide React
-* Responsive CSS utility architecture
-* Custom theme system
 * Component-based UI architecture
+* Responsive utility-based styling
+* Custom theme system
 
 ### Authentication
 
 * Google Identity Services
-* Custom RecallNova email authentication
+* RecallNova email authentication
 * JWT access tokens
 * HttpOnly refresh-session cookies
+* Client-side authentication provider
 
 ### API
 
-* Fetch-based API client
-* Centralized authentication-aware request handling
-* Automatic access-token refresh
+* Fetch API
+* Centralized API client
+* Automatic token refresh
+* Authenticated request handling
+* Multipart/form-data support
 * FastAPI REST backend integration
 
 ### Deployment
@@ -128,13 +209,12 @@ The frontend communicates with the RecallNova backend through authenticated REST
 
 ## Architecture
 
-The frontend is separated into application routes, reusable UI components, API utilities, authentication state, and styling.
-
 ```text
 recallnova/
-│
+
 ├── app/
 │   ├── (app)/
+│   ├── guest/
 │   ├── login/
 │   ├── signup/
 │   ├── settings/
@@ -147,7 +227,9 @@ recallnova/
 │   ├── ui/
 │   ├── Header.tsx
 │   ├── Sidebar.tsx
-│   └── ProfileDrawer.tsx
+│   ├── GuestSidebar.tsx
+│   ├── ProfileDrawer.tsx
+│   └── UploadBox.tsx
 │
 ├── lib/
 │   ├── api.ts
@@ -160,51 +242,91 @@ recallnova/
 │
 ├── next.config.ts
 ├── package.json
-├── tsconfig.json
-└── .gitignore
+└── tsconfig.json
 ```
+
+---
+
+## Route Structure
+
+Authenticated workspace routes use the normal application namespace:
+
+```text
+/chat
+/upload
+/learning
+/learning/flashcards
+/learning/quiz
+/dashboard
+```
+
+Guest routes use a separate namespace:
+
+```text
+/guest
+/guest/chat
+/guest/chat/[chatId]
+/guest/upload
+/guest/learning
+/guest/learning/flashcards
+/guest/learning/quiz
+```
+
+This separation prevents guest and registered workspace URLs from being mixed.
 
 ---
 
 ## Authentication Flow
 
-The frontend supports two authentication methods:
+Registered users authenticate using Google or email/password.
 
 ```text
-                 RecallNova
-                     │
-          ┌──────────┴──────────┐
-          │                     │
-       Google                Email/Password
-          │                     │
-          └──────────┬──────────┘
-                     ↓
-             RecallNova Backend
-                     ↓
-              Access Token
-                     +
-          Refresh Session Cookie
+Login / Signup
+      ↓
+RecallNova Backend
+      ↓
+Access Token
++
+Refresh Session
+      ↓
+AuthProvider
+      ↓
+Application
 ```
 
-The access token is used for authenticated API requests.
+Guest authentication follows a separate flow:
 
-The refresh credential is stored in an HttpOnly cookie and is not exposed to client-side JavaScript.
+```text
+Continue as Guest
+      ↓
+Existing guest ID or new guest ID
+      ↓
+Guest JWT
+      ↓
+AuthProvider
+      ↓
+/guest workspace
+```
+
+The guest identity can be reused by the same browser while the guest data remains available on the backend.
 
 ---
 
 ## API Client
 
-`lib/apiClient.ts` provides a centralized request layer.
+`lib/apiClient.ts` provides the centralized request layer.
 
 Responsibilities include:
 
 * Attaching the access token
-* Sending authenticated cookies
+* Sending credentials
 * Handling JSON requests
 * Supporting multipart/form-data uploads
 * Refreshing expired access tokens
-* Preventing multiple simultaneous refresh requests
-* Repeating the failed request after successful refresh
+* Preventing simultaneous refresh requests
+* Retrying failed authenticated requests
+* Removing invalid access tokens
+* Centralizing request behavior
 
 Application-specific API functions are exposed through:
 
@@ -214,65 +336,90 @@ lib/api.ts
 
 ---
 
-## Environment Variables
+## Learning Preferences
 
-Create a local environment file:
+Learning preferences are stored locally in the browser.
 
-```env
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
-```
-
-For production:
-
-```env
-NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
-```
-
-Do not commit `.env`, `.env.local`, or other environment files containing secrets.
-
----
-
-## Installation
-
-```bash
-git clone <repository-url>
-cd recallnova
-npm install
-```
-
----
-
-## Development
-
-Start the development server:
-
-```bash
-npm run dev
-```
-
-Open:
+Current settings include:
 
 ```text
-http://localhost:3000
+quiz_timer
+quiz_count
+flashcard_count
 ```
+
+Default values:
+
+```text
+Quiz timer:       30
+Quiz count:        5
+Flashcard count:  10
+```
+
+The preferences are read and validated before being used by learning requests.
 
 ---
 
-## Production Build
+## Guest Limits
 
-Create a production build:
+Guest limits are enforced by the backend plan configuration.
 
-```bash
-npm run build
+Current guest limits are:
+
+```text
+Messages
+  Daily:       10
+  Monthly:     100
+
+Flashcard generations
+  Daily:       2
+  Monthly:     10
+
+Quiz generations
+  Daily:       2
+  Monthly:     10
+
+Documents
+  Maximum:     2
+
+Chat sessions
+  Maximum:     5
+
+Rate limit
+  5 requests/minute
 ```
 
-Start the production server:
+The frontend displays user-facing states and warnings, but backend enforcement remains authoritative.
 
-```bash
-npm start
+---
+
+## Loading & Empty States
+
+The frontend provides explicit loading states for asynchronous workspace operations.
+
+Examples:
+
+```text
+Loading workspace...
+Loading flashcards...
+Loading quizzes...
+Uploading document...
 ```
+
+Empty document workspaces display:
+
+```text
+UPLOAD DOCUMENTS IN THE UPLOAD PAGE TO START!
+```
+
+Learning pages can provide a dynamic upload action:
+
+```text
+Registered → /upload
+Guest      → /guest/upload
+```
+
+These states prevent empty or partially initialized interfaces from appearing broken.
 
 ---
 
@@ -283,39 +430,80 @@ RecallNova Frontend requires the RecallNova FastAPI backend.
 The backend is responsible for:
 
 * Authentication
+* Guest identity handling
 * Session management
 * PDF processing
-* Document storage
+* Document persistence
 * Retrieval
 * AI chat
 * Flashcard generation
 * Quiz generation
 * Quiz persistence
+* Quiz progress
 * Usage limits
+* Rate limiting
+* Guest data retention
 * MongoDB persistence
 
 ---
 
-## Screenshots
+## Environment Variables
 
-Add project screenshots under `public/` and reference them here.
+Local development:
 
-### Home
-
-```md
-![RecallNova Home](public/home-preview.png)
+```env
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
 ```
 
-### Chat
+Production:
 
-```md
-![RecallNova Chat](public/chat-preview.png)
+```env
+NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
 ```
 
-### Quiz
+Do not commit:
 
-```md
-![RecallNova Quiz](public/quiz-preview.png)
+```text
+.env
+.env.local
+.env.production
+```
+
+---
+
+## Installation
+
+```bash
+git clone <repository-url>
+
+cd recallnova
+
+npm install
+```
+
+---
+
+## Development
+
+```bash
+npm run dev
+```
+
+Frontend:
+
+```text
+http://localhost:3000
+```
+
+---
+
+## Production Build
+
+```bash
+npm run build
+npm start
 ```
 
 ---
@@ -332,8 +520,8 @@ Typical configuration:
 
 ```text
 Framework: Next.js
-Build Command: npm run build
 Install Command: npm install
+Build Command: npm run build
 ```
 
 Set the required production environment variables in Vercel.
@@ -348,33 +536,55 @@ NEXT_PUBLIC_API_URL
 
 ---
 
-## Development Principles
+## Current Status
 
-The frontend follows several architectural principles:
+Implemented:
 
-* Keep authentication centralized
-* Keep API communication centralized
-* Keep reusable UI components modular
-* Keep application routes separated by responsibility
-* Keep responsive behavior across desktop, tablet, and mobile
-* Avoid exposing server-side secrets to the browser
+* Registered authentication
+* Google login
+* Email authentication
+* Persistent auth sessions
+* Guest mode
+* Persistent guest identity
+* Guest-specific routes
+* Guest navigation
+* Guest document workspace
+* Guest chat
+* Guest flashcards
+* Guest learning hub
+* Guest quiz restriction
+* Usage-aware frontend
+* ThemeProvider
+* Multiple themes
+* Responsive UI
+* Loading and empty states
+* Dashboard
+* Settings
+* Profile drawer
+* Document management
+* Chat history
+* Flashcard persistence
+* Quiz persistence
+* Quiz progress
+
+Doc Atlas has its product/UI direction established but advanced interactive relationship mapping remains a future feature.
 
 ---
 
 ## Roadmap
 
-Planned improvements include:
-
 * Streaming AI responses
-* Multi-document conversations
-* Advanced semantic search
+* Advanced semantic/vector search
+* Multi-document reasoning
 * AI memory/context improvements
-* Expanded learning analytics
 * OCR support
-* Team workspaces
+* Background processing
+* Advanced learning analytics
+* Personalized study plans
+* Guest-to-account migration
 * Subscription and billing workflows
-* Personalized AI study plans
-* More advanced Doc Atlas functionality
+* Team workspaces
+* Advanced Doc Atlas functionality
 
 ---
 
