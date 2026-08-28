@@ -36,10 +36,23 @@ import {
   useParams,
 } from "next/navigation";
 
+import {
+  useAuth,
+} from "@/components/auth/AuthProvider";
+
 export default function ChatBox() {
 
   const router = useRouter();
-const params = useParams();
+  const params = useParams();
+
+  const {
+    isGuest,
+  } = useAuth();
+
+  const chatBasePath =
+    isGuest
+      ? "/guest/chat"
+      : "/chat";
 const [showDocs,setShowDocs] =
   useState(false);
 const [showLoader, setShowLoader] = useState(false);
@@ -446,7 +459,7 @@ const confirmDeleteChat = async () => {
 
     setInput("");
 
-    router.push("/chat");
+router.push(chatBasePath);
   }
 
   setDeleteModalOpen(false);
@@ -494,9 +507,8 @@ const res = await sendMessage(
       setChatId(res.chat_id);
 
       if (!chatId) {
-
-        router.push(
-          `/chat/${res.chat_id}`
+router.push(
+          `${chatBasePath}/${res.chat_id}`
         );
       }
     }
@@ -546,7 +558,7 @@ const newChat = () => {
 
   setTotalPages(1);
 
-  router.push("/chat");
+router.push(chatBasePath);
 };
   return (
 
@@ -609,8 +621,8 @@ onClick={() => {
     chatLoading
   ) return;
 
-  router.push(
-    `/chat/${s.chat_id}`
+router.push(
+    `${chatBasePath}/${s.chat_id}`
   );
 }}
 
@@ -896,9 +908,8 @@ onClick={() => {
           ) return;
 
           setMobileHistoryOpen(false);
-
-          router.push(
-            `/chat/${s.chat_id}`
+router.push(
+            `${chatBasePath}/${s.chat_id}`
           );
         }}
         className={`

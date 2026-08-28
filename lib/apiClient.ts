@@ -8,64 +8,66 @@ const TOKEN_KEY =
 let refreshPromise:
   Promise<boolean> | null = null;
 
-type ApiClientOptions = RequestInit & {
-  skipAuth?: boolean;
-};
-
-/* ============================================================
-   REFRESH ACCESS TOKEN
-   ============================================================ */
+export type ApiClientOptions =
+  RequestInit & {
+    skipAuth?: boolean;
+    skipRefresh?: boolean;
+  };
 
 async function refreshAccessToken(): Promise<boolean> {
   if (refreshPromise) {
     return refreshPromise;
   }
 
-  refreshPromise = (async () => {
-    try {
-      const response = await fetch(
-        `${BASE_URL}/auth/refresh`,
-        {
-          method: "POST",
-          credentials: "include",
-          cache: "no-store",
+  refreshPromise =
+    (async () => {
+      try {
+        const response =
+          await fetch(
+            `${BASE_URL}/auth/refresh`,
+            {
+              method: "POST",
+              credentials:
+                "include",
+              cache: "no-store",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+            }
+          );
+
+        if (!response.ok) {
+          return false;
         }
-      );
 
-      if (!response.ok) {
+        const data =
+          await response.json();
+
+        if (!data?.access_token) {
+          return false;
+        }
+
+        localStorage.setItem(
+          TOKEN_KEY,
+          data.access_token
+        );
+
+        return true;
+      } catch (error) {
+        console.error(
+          "SESSION REFRESH FAILED:",
+          error
+        );
+
         return false;
+      } finally {
+        refreshPromise = null;
       }
-
-      const data = await response.json();
-
-      if (!data?.access_token) {
-        return false;
-      }
-
-      localStorage.setItem(
-        TOKEN_KEY,
-        data.access_token
-      );
-
-      return true;
-    } catch (error) {
-      console.error(
-        "SESSION REFRESH FAILED:",
-        error
-      );
-
-      return false;
-    } finally {
-      refreshPromise = null;
-    }
-  })();
+    })();
 
   return refreshPromise;
 }
-
-/* ============================================================
-   MAIN API CLIENT
-   ============================================================ */
 
 export async function apiClient(
   path: string,
@@ -74,6 +76,7 @@ export async function apiClient(
 ): Promise<Response> {
   const {
     skipAuth = false,
+    skipRefresh = false,
     ...requestOptions
   } = options;
 
@@ -85,17 +88,11 @@ export async function apiClient(
         )
       : null;
 
-  const headers = new Headers(
-    requestOptions.headers
-  );
+  const headers =
+    new Headers(
+      requestOptions.headers
+    );
 
-  /*
-   * Automatically set JSON content type.
-   *
-   * Do not set this for FormData because
-   * the browser must generate the multipart
-   * boundary itself.
-   */
   if (
     requestOptions.body &&
     !(
@@ -109,10 +106,6 @@ export async function apiClient(
     );
   }
 
-  /*
-   * Attach access token only when this
-   * request is authenticated.
-   */
   if (token) {
     headers.set(
       "Authorization",
@@ -120,27 +113,25 @@ export async function apiClient(
     );
   }
 
-  const response = await fetch(
-    `${BASE_URL}${path}`,
-    {
-      ...requestOptions,
-      headers,
-      credentials: "include",
-    }
-  );
+  const response =
+    await fetch(
+      `${BASE_URL}${path}`,
+      {
+        ...requestOptions,
+        headers,
+        credentials: "include",
+        cache:
+          requestOptions.cache ??
+          "no-store",
+      }
+    );
 
-  /*
-   * Access-token expiration.
-   *
-   * Only retry when:
-   * - server returned 401
-   * - request had an access token
-   * - this is the first attempt
-   */
   if (
     response.status === 401 &&
     retry &&
-    token
+    !skipRefresh &&
+    token &&
+    path !== "/auth/refresh"
   ) {
     const refreshed =
       await refreshAccessToken();
@@ -152,14 +143,12 @@ export async function apiClient(
         false
       );
     }
+
+    localStorage.removeItem(
+      TOKEN_KEY
+    );
   }
 
-  /*
-   * Never redirect automatically here.
-   *
-   * AuthProvider and individual auth pages
-   * should decide what to do with failures.
-   */
   return response;
 }
 

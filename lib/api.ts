@@ -1,10 +1,75 @@
-import {
-  apiClient,
-} from "./apiClient";
+import { apiClient } from "./apiClient";
+
+/* ============================================================
+   LEARNING PREFERENCES
+============================================================ */
+
+export type LearningPreferences = {
+  quizTimer: number;
+  quizCount: number;
+  flashcardCount: number;
+};
+
+const DEFAULT_LEARNING_PREFERENCES: LearningPreferences = {
+  quizTimer: 30,
+  quizCount: 5,
+  flashcardCount: 10,
+};
+
+function readNumberSetting(
+  key: string,
+  fallback: number
+) {
+  if (
+    typeof window === "undefined"
+  ) {
+    return fallback;
+  }
+
+  const raw =
+    localStorage.getItem(key);
+
+  if (!raw) {
+    return fallback;
+  }
+
+  const value = Number(raw);
+
+  if (
+    !Number.isFinite(value) ||
+    value < 1
+  ) {
+    return fallback;
+  }
+
+  return value;
+}
+
+export function getLearningPreferences(): LearningPreferences {
+  return {
+    quizTimer:
+      readNumberSetting(
+        "quiz_timer",
+        DEFAULT_LEARNING_PREFERENCES.quizTimer
+      ),
+
+    quizCount:
+      readNumberSetting(
+        "quiz_count",
+        DEFAULT_LEARNING_PREFERENCES.quizCount
+      ),
+
+    flashcardCount:
+      readNumberSetting(
+        "flashcard_count",
+        DEFAULT_LEARNING_PREFERENCES.flashcardCount
+      ),
+  };
+}
 
 /* ============================================================
    CHAT
-   ============================================================ */
+============================================================ */
 
 export async function getChatSessions() {
   const res = await apiClient(
@@ -18,9 +83,7 @@ export async function getChat(
   chat_id: string
 ) {
   const res = await apiClient(
-    `/chat/${encodeURIComponent(
-      chat_id
-    )}`
+    `/chat/${encodeURIComponent(chat_id)}`
   );
 
   return res.json();
@@ -30,9 +93,7 @@ export async function deleteChat(
   chat_id: string
 ) {
   const res = await apiClient(
-    `/chat/${encodeURIComponent(
-      chat_id
-    )}`,
+    `/chat/${encodeURIComponent(chat_id)}`,
     {
       method: "DELETE",
     }
@@ -52,7 +113,6 @@ export async function sendMessage(
     "/chat/",
     {
       method: "POST",
-
       body: JSON.stringify({
         question,
         doc_id,
@@ -62,33 +122,58 @@ export async function sendMessage(
       }),
     }
   );
+const data = await res.json();
 
-  return res.json();
+if (!res.ok) {
+
+  console.error(
+    "UPLOAD ERROR RESPONSE:",
+    data
+  );
+
+  throw new Error(
+
+    typeof data?.detail === "string"
+      ? data.detail
+
+      : typeof data?.error === "string"
+      ? data.error
+
+      : typeof data?.message === "string"
+      ? data.message
+
+      : JSON.stringify(data)
+  );
+}
+
+  return data;
 }
 
 /* ============================================================
    DASHBOARD
-   ============================================================ */
+============================================================ */
 
 export async function getDashboard() {
   const res = await apiClient(
     "/dashboard/"
   );
 
+  if (!res.ok) {
+    throw new Error(
+      "Unable to load dashboard."
+    );
+  }
+
   return res.json();
 }
 
 export async function getDashboardStats() {
-  const res = await apiClient(
-    "/dashboard/"
-  );
-
-  return res.json();
+  return getDashboard();
 }
 
 /* ============================================================
    DOCUMENTS
-   ============================================================ */
+============================================================ */
 
 export async function uploadPDF(
   file: File
@@ -109,13 +194,92 @@ export async function uploadPDF(
     }
   );
 
-  return res.json();
+  const data =
+    await res.json().catch(
+      () => null
+    );
+
+  if (!res.ok) {
+    const detail =
+      data?.detail;
+
+    let message =
+      "Unable to upload document.";
+
+    if (
+      typeof detail === "string"
+    ) {
+      message = detail;
+    } else if (
+      detail &&
+      typeof detail === "object"
+    ) {
+      message =
+        detail.message ||
+        detail.code ||
+        JSON.stringify(
+          detail
+        );
+    } else if (
+      typeof data?.error ===
+      "string"
+    ) {
+      message =
+        data.error;
+    } else if (
+      typeof data?.message ===
+      "string"
+    ) {
+      message =
+        data.message;
+    }
+
+    const error =
+      new Error(message);
+
+    (
+      error as Error & {
+        code?: string;
+        usage?: unknown;
+        status?: number;
+      }
+    ).code =
+      detail?.code;
+
+    (
+      error as Error & {
+        code?: string;
+        usage?: unknown;
+        status?: number;
+      }
+    ).usage =
+      detail?.usage;
+
+    (
+      error as Error & {
+        code?: string;
+        usage?: unknown;
+        status?: number;
+      }
+    ).status =
+      res.status;
+
+    throw error;
+  }
+
+  return data;
 }
 
 export async function getDocuments() {
   const res = await apiClient(
     "/documents/"
   );
+
+  if (!res.ok) {
+    throw new Error(
+      "Unable to load documents."
+    );
+  }
 
   return res.json();
 }
@@ -124,24 +288,107 @@ export async function deleteDocument(
   doc_id: string
 ) {
   const res = await apiClient(
-    `/documents/${encodeURIComponent(
-      doc_id
-    )}`,
+    `/documents/${encodeURIComponent(doc_id)}`,
     {
       method: "DELETE",
     }
   );
 
-  return res.json();
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(
+      data?.detail ||
+        data?.error ||
+        "Unable to delete document."
+    );
+  }
+
+  return data;
+}
+/* ============================================================
+   USAGE / LIMIT WARNINGS
+============================================================ */
+
+export type UsageLimitStatus = {
+  used: number;
+  daily_used: number;
+  monthly_used: number;
+  daily_limit: number;
+  monthly_limit: number;
+  daily_remaining: number;
+  monthly_remaining: number;
+};
+
+export type UsageWarning = {
+  warning: boolean;
+  remaining_daily: number;
+  remaining_monthly: number;
+};
+
+export type UsageStatusResponse = {
+  messages: UsageLimitStatus;
+  flashcards: UsageLimitStatus;
+  quizzes: UsageLimitStatus;
+};
+
+export type UsageWarningsResponse = {
+  messages: UsageWarning;
+  flashcards: UsageWarning;
+  quizzes: UsageWarning;
+};
+
+export async function getUsageStatus(): Promise<UsageStatusResponse> {
+  const res =
+    await apiClient(
+      "/usage/status"
+    );
+
+  const data =
+    await res.json().catch(
+      () => null
+    );
+
+  if (!res.ok) {
+    throw new Error(
+      data?.detail?.message ||
+        data?.detail ||
+        "Unable to load usage status."
+    );
+  }
+
+  return data;
+}
+
+export async function getUsageWarnings(): Promise<UsageWarningsResponse> {
+  const res =
+    await apiClient(
+      "/usage/warnings"
+    );
+
+  const data =
+    await res.json().catch(
+      () => null
+    );
+
+  if (!res.ok) {
+    throw new Error(
+      data?.detail?.message ||
+        data?.detail ||
+        "Unable to load usage warnings."
+    );
+  }
+
+  return data;
 }
 
 /* ============================================================
    LEARNING
-   ============================================================ */
+============================================================ */
 
 export async function getFlashcards({
   doc_id,
-  count = 10,
+  count,
   topic = "",
   difficulty = "medium",
 }: {
@@ -150,9 +397,18 @@ export async function getFlashcards({
   topic?: string;
   difficulty?: string;
 }) {
+  const preferences =
+    getLearningPreferences();
+
+  const effectiveCount =
+    count ??
+    preferences.flashcardCount;
+
   const params =
     new URLSearchParams({
-      count: String(count),
+      count: String(
+        effectiveCount
+      ),
       topic,
       difficulty,
     });
@@ -168,12 +424,22 @@ export async function getFlashcards({
     `/learning/flashcards?${params.toString()}`
   );
 
-  return res.json();
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(
+      data?.detail?.message ||
+        data?.detail ||
+        "Unable to generate flashcards."
+    );
+  }
+
+  return data;
 }
 
 export async function getQuiz({
   doc_id,
-  count = 5,
+  count,
   topic = "",
   difficulty = "medium",
   force_new = false,
@@ -184,9 +450,17 @@ export async function getQuiz({
   difficulty?: string;
   force_new?: boolean;
 }) {
+  const preferences =
+    getLearningPreferences();
+
+  const effectiveCount =
+    count ?? preferences.quizCount;
+
   const params =
     new URLSearchParams({
-      count: String(count),
+      count: String(
+        effectiveCount
+      ),
       topic,
       difficulty,
       force_new: String(
@@ -205,16 +479,24 @@ export async function getQuiz({
     `/learning/quiz?${params.toString()}`
   );
 
-  return res.json();
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(
+      data?.detail?.message ||
+        data?.detail ||
+        "Unable to generate quiz."
+    );
+  }
+
+  return data;
 }
 
 export async function checkFlashcards(
   doc_id: string
 ) {
   const res = await apiClient(
-    `/learning/flashcards/check?doc_id=${encodeURIComponent(
-      doc_id
-    )}`
+    `/learning/flashcards/check?doc_id=${encodeURIComponent(doc_id)}`
   );
 
   return res.json();
@@ -224,9 +506,7 @@ export async function checkQuiz(
   doc_id: string
 ) {
   const res = await apiClient(
-    `/learning/quiz/check?doc_id=${encodeURIComponent(
-      doc_id
-    )}`
+    `/learning/quiz/check?doc_id=${encodeURIComponent(doc_id)}`
   );
 
   return res.json();
@@ -235,23 +515,34 @@ export async function checkQuiz(
 export async function saveQuizProgress(
   data: unknown
 ) {
-  return apiClient(
+  const res = await apiClient(
     "/learning/quiz/progress/save",
     {
       method: "POST",
-
       body: JSON.stringify(data),
     }
   );
+
+  if (!res.ok) {
+    const payload =
+      await res.json().catch(
+        () => null
+      );
+
+    throw new Error(
+      payload?.detail ||
+        "Unable to save quiz progress."
+    );
+  }
+
+  return res;
 }
 
 export async function getQuizProgress(
   doc_id: string
 ) {
   const res = await apiClient(
-    `/learning/quiz/progress?doc_id=${encodeURIComponent(
-      doc_id
-    )}`
+    `/learning/quiz/progress?doc_id=${encodeURIComponent(doc_id)}`
   );
 
   return res.json();
@@ -259,7 +550,7 @@ export async function getQuizProgress(
 
 /* ============================================================
    GOOGLE AUTH
-   ============================================================ */
+============================================================ */
 
 export async function loginWithGoogle(
   googleToken: string,
@@ -269,9 +560,7 @@ export async function loginWithGoogle(
     "/auth/google",
     {
       method: "POST",
-
       skipAuth: true,
-
       body: JSON.stringify({
         google_token:
           googleToken,
@@ -280,8 +569,7 @@ export async function loginWithGoogle(
     }
   );
 
-  const data =
-    await res.json();
+  const data = await res.json();
 
   if (!res.ok) {
     throw new Error(
@@ -306,7 +594,7 @@ export async function loginWithGoogle(
 
 /* ============================================================
    EMAIL SIGNUP
-   ============================================================ */
+============================================================ */
 
 export async function signupWithEmail(
   email: string,
@@ -318,9 +606,7 @@ export async function signupWithEmail(
     "/auth/email/signup",
     {
       method: "POST",
-
       skipAuth: true,
-
       body: JSON.stringify({
         email,
         password,
@@ -330,8 +616,7 @@ export async function signupWithEmail(
     }
   );
 
-  const data =
-    await res.json();
+  const data = await res.json();
 
   if (!res.ok) {
     throw new Error(
@@ -340,12 +625,23 @@ export async function signupWithEmail(
     );
   }
 
+  if (!data?.access_token) {
+    throw new Error(
+      "Account was created, but authentication could not be completed."
+    );
+  }
+
+  localStorage.setItem(
+    "recallnova_access_token",
+    data.access_token
+  );
+
   return data;
 }
 
 /* ============================================================
    EMAIL LOGIN
-   ============================================================ */
+============================================================ */
 
 export async function loginWithEmail(
   email: string,
@@ -355,9 +651,7 @@ export async function loginWithEmail(
     "/auth/email/login",
     {
       method: "POST",
-
       skipAuth: true,
-
       body: JSON.stringify({
         email,
         password,
@@ -365,8 +659,7 @@ export async function loginWithEmail(
     }
   );
 
-  const data =
-    await res.json();
+  const data = await res.json();
 
   if (!res.ok) {
     throw new Error(
@@ -388,102 +681,56 @@ export async function loginWithEmail(
 
   return data;
 }
+export async function continueAsGuest() {
+  const timezone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-/* ============================================================
-   EMAIL VERIFICATION
-   ============================================================ */
+  const existingGuestId =
+    localStorage.getItem(
+      "recallnova_guest_id"
+    );
 
-export async function verifyEmail(
-  token: string
-) {
   const res = await apiClient(
-    "/auth/email/verify",
+    "/auth/guest",
     {
       method: "POST",
-
       skipAuth: true,
-
       body: JSON.stringify({
-        token,
+        timezone,
+        guest_id:
+          existingGuestId || undefined,
       }),
     }
   );
+console.log(
+  "EXISTING GUEST ID BEFORE LOGIN:",
+  existingGuestId
+);
 
-  const data =
-    await res.json();
+  const data = await res.json();
 
   if (!res.ok) {
     throw new Error(
       data?.detail ||
-        "Email verification failed."
+        "Unable to start guest session."
     );
   }
 
-  return data;
-}
-
-/* ============================================================
-   FORGOT PASSWORD
-   ============================================================ */
-
-export async function forgotPassword(
-  email: string
-) {
-  const res = await apiClient(
-    "/auth/email/forgot-password",
-    {
-      method: "POST",
-
-      skipAuth: true,
-
-      body: JSON.stringify({
-        email,
-      }),
-    }
-  );
-
-  const data =
-    await res.json();
-
-  if (!res.ok) {
+  if (!data?.access_token) {
     throw new Error(
-      data?.detail ||
-        "Unable to process password reset."
+      "Guest session could not be created."
     );
   }
 
-  return data;
-}
-
-/* ============================================================
-   RESET PASSWORD
-   ============================================================ */
-
-export async function resetPassword(
-  token: string,
-  password: string
-) {
-  const res = await apiClient(
-    "/auth/email/reset-password",
-    {
-      method: "POST",
-
-      skipAuth: true,
-
-      body: JSON.stringify({
-        token,
-        password,
-      }),
-    }
+  localStorage.setItem(
+    "recallnova_access_token",
+    data.access_token
   );
 
-  const data =
-    await res.json();
-
-  if (!res.ok) {
-    throw new Error(
-      data?.detail ||
-        "Password reset failed."
+  if (data?.user?.id) {
+    localStorage.setItem(
+      "recallnova_guest_id",
+      data.user.id
     );
   }
 

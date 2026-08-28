@@ -17,7 +17,6 @@ export default function AuthenticatedHome() {
       className="
         h-full
         w-full
-        overflow-y-auto
         overflow-x-hidden
         overscroll-contain
         custom-scrollbar

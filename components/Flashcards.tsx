@@ -15,9 +15,25 @@ import {
   checkFlashcards,
 } from "@/lib/api";
 
+import Link from "next/link";
+
+import {
+  useAuth,
+} from "@/components/auth/AuthProvider";
+
 export default function Flashcards() {
-  const [docs, setDocs] = useState<any[]>([]);
-  const [selectedDoc, setSelectedDoc] = useState("");
+  const {
+    isGuest,
+  } = useAuth();
+
+  const uploadPath =
+    isGuest
+      ? "/guest/upload"
+      : "/upload";
+
+const [docs, setDocs] = useState<any[]>([]);
+const [docsLoading, setDocsLoading] = useState(true);
+const [selectedDoc, setSelectedDoc] = useState("");
 
   const [cards, setCards] = useState<any[]>([]);
   const [existsMap, setExistsMap] = useState<any>({});
@@ -51,22 +67,45 @@ useEffect(() => {
   setFlipped(false);
 }, [page]);
 
-  const loadDocs = async () => {
+const loadDocs = async () => {
+  try {
+    setDocsLoading(true);
+
     const res = await getDocuments();
     const list = res.documents || [];
+
     setDocs(list);
 
     // 🔥 CHECK EXISTENCE
     const map: any = {};
-    for (const d of list) {
-const r = await checkFlashcards(d._id);
 
-console.log("FLASHCARD CHECK:", r);map[d._id] = {
-  exists: r.exists,
-  count: r.count || 0,
-};    }
+    for (const d of list) {
+      const r = await checkFlashcards(d._id);
+
+      console.log(
+        "FLASHCARD CHECK:",
+        r
+      );
+
+      map[d._id] = {
+        exists: r.exists,
+        count: r.count || 0,
+      };
+    }
+
     setExistsMap(map);
-  };
+  } catch (err) {
+    console.error(
+      "FLASHCARD DOCUMENT LOAD FAILED:",
+      err
+    );
+
+    setDocs([]);
+    setExistsMap({});
+  } finally {
+    setDocsLoading(false);
+  }
+};
 const generate = async (count = 10, docId: string) => {
   if (!docId) return;
 
@@ -196,44 +235,134 @@ onClick={() => {
       {!cards.length ? (
 
 <div className="p-3 sm:p-6">
-          {/* TABLE HEADER */}
+{docsLoading ? (
+  <div className="
+    mx-auto
+    flex
+    min-h-[180px]
+    max-w-6xl
+    items-center
+    justify-center
+    rounded-2xl
+    border
+    border-white/10
+    bg-white/[0.025]
+  ">
+    <div className="
+      flex
+      flex-col
+      items-center
+      gap-3
+    ">
+      <div className="
+        h-8
+        w-8
+        animate-spin
+        rounded-full
+        border-4
+        border-white/10
+        border-t-lime-400
+      " />
 
-          <div className="
-hidden
-            md:grid
-            md:grid-cols-12
-            px-4
-            pb-3
-            mb-3
-            text-xs
-            uppercase
-            tracking-wider
-            opacity-50
-            border-b
-            border-white/10
-          ">
+      <p className="
+        text-sm
+        font-medium
+        opacity-60
+      ">
+        Loading flashcards...
+      </p>
+    </div>
+  </div>
+) : docs.length === 0 ? (
+            <div className="
+              mx-auto
+              max-w-6xl
+              rounded-2xl
+              border
+              border-white/10
+              bg-white/[0.025]
+              px-4
+              py-7
+              sm:px-6
+              sm:py-8
+              text-center
+            ">
+              <p className="
+                text-sm
+                sm:text-base
+                font-semibold
+                opacity-80
+                leading-6
+              ">
+                UPLOAD DOCUMENTS IN THE UPLOAD PAGE TO START!
+              </p>
 
-            <div className="col-span-5">
-              Document
+              <Link
+                href={uploadPath}
+                className="
+                  mt-4
+                  inline-flex
+                  min-h-10
+                  w-auto
+                  max-w-full
+                  items-center
+                  justify-center
+                  rounded-xl
+                  bg-[var(--primary)]
+                  px-4
+                  py-2
+                  text-sm
+                  font-bold
+                  text-[var(--bg)]
+                  transition
+                  hover:-translate-y-0.5
+                  hover:opacity-90
+                  active:scale-[0.98]
+                "
+              >
+                Go to upload
+              </Link>
             </div>
+                 ) : (
+            <>
+              {/* TABLE HEADER */}
 
-            <div className="col-span-2 text-center">
-              Status
-            </div>
+              <div className="
+                hidden
+                md:grid
+                md:grid-cols-12
+                px-4
+                pb-3
+                mb-3
+                text-xs
+                uppercase
+                tracking-wider
+                opacity-50
+                border-b
+                border-white/10
+              ">
 
-            <div className="col-span-2 text-center">
-              Qty
-            </div>
+                <div className="col-span-5">
+                  Document
+                </div>
 
-            <div className="col-span-3 text-center">
-              Action
-            </div>
+                <div className="col-span-2 text-center">
+                  Status
+                </div>
 
-          </div>
+                <div className="col-span-2 text-center">
+                  Qty
+                </div>
 
-          {/* ROWS */}
+                <div className="col-span-3 text-center">
+                  Action
+                </div>
 
-          <div className="space-y-2">
+              </div>
+
+              {/* ROWS */}
+
+              <div className="space-y-2">
 
             {docs.map((d) => {
 
@@ -474,10 +603,10 @@ hidden
     "
   >
 
-    <button
-      onClick={() =>
-        generate(10, d._id)
-      }
+<button
+  onClick={() =>
+    generate(undefined, d._id)
+  }
       className={`
         flex-1
         md:w-[110px]
@@ -546,8 +675,9 @@ hidden
 
               );
             })}
-
-          </div>
+              </div>
+            </>
+          )}
 
         </div>
 

@@ -15,6 +15,10 @@ import {
   TOKEN_KEY,
 } from "@/lib/apiClient";
 
+import {
+  getUsageWarnings,
+} from "@/lib/api";
+
 type User = {
   id: string;
   email: string;
@@ -24,21 +28,49 @@ type User = {
   timezone: string;
 };
 
+type UsageWarning = {
+  warning: boolean;
+  remaining_daily: number;
+  remaining_monthly: number;
+};
+
+type UsageWarnings = {
+  messages: UsageWarning;
+  flashcards: UsageWarning;
+  quizzes: UsageWarning;
+};
+
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
+
   isAuthenticated: boolean;
+  isGuest: boolean;
+  isRegisteredUser: boolean;
+
+  usageWarnings: UsageWarnings | null;
+
   setAuthenticatedUser: (
-    user: User
+    user: User,
+    token?: string | null
   ) => void;
+
   logout: () => Promise<void>;
-  refreshSession: () => Promise<User | null>;
+
+  refreshSession: () => Promise<
+    User | null
+  >;
+
+  refreshUsageWarnings: () => Promise<void>;
 };
 
 const AuthContext =
   createContext<
     AuthContextValue | undefined
   >(undefined);
+
+const GUEST_ID_KEY =
+  "recallnova_guest_id";
 
 export function AuthProvider({
   children,
@@ -51,24 +83,60 @@ export function AuthProvider({
   const [loading, setLoading] =
     useState(true);
 
+  const [
+    usageWarnings,
+    setUsageWarnings,
+  ] =
+    useState<
+      UsageWarnings | null
+    >(null);
+
   const refreshPromiseRef =
     useRef<
       Promise<User | null> | null
     >(null);
 
   const clearLocalAuth =
-    useCallback(() => {
-      if (
-        typeof window !==
-        "undefined"
-      ) {
-        window.localStorage.removeItem(
-          TOKEN_KEY
-        );
-      }
+  useCallback(() => {
+    if (
+      typeof window !==
+      "undefined"
+    ) {
+      // Clear only the active authentication token.
+      // Keep the guest ID so the same browser can
+      // reconnect to its existing guest workspace.
+      window.localStorage.removeItem(
+        TOKEN_KEY
+      );
+    }
 
-      setUser(null);
-    }, []);
+    setUser(null);
+    setUsageWarnings(null);
+  }, []);
+
+  const refreshUsageWarnings =
+    useCallback(
+      async () => {
+        try {
+          const data =
+            await getUsageWarnings();
+
+          setUsageWarnings(
+            data
+          );
+        } catch (error) {
+          console.error(
+            "USAGE WARNING LOAD FAILED:",
+            error
+          );
+
+          setUsageWarnings(
+            null
+          );
+        }
+      },
+      []
+    );
 
   const refreshSession =
     useCallback(
@@ -186,6 +254,21 @@ export function AuthProvider({
                   setUser(
                     data.user
                   );
+
+                  /*
+                   * Make sure an existing guest
+                   * identity is preserved locally.
+                   */
+                  if (
+                    data.user?.plan ===
+                      "guest" &&
+                    data.user?.id
+                  ) {
+                    window.localStorage.setItem(
+                      GUEST_ID_KEY,
+                      data.user.id
+                    );
+                  }
                 }
 
                 return;
@@ -201,6 +284,9 @@ export function AuthProvider({
           /*
            * Missing/expired access token.
            * Try persistent refresh session.
+           *
+           * Registered users use their
+           * refresh cookie here.
            */
           const refreshedUser =
             await refreshSession();
@@ -227,10 +313,98 @@ export function AuthProvider({
     };
   }, [refreshSession]);
 
+  /*
+   * Keep guest identity synchronized
+   * whenever AuthProvider receives a guest.
+   *
+   * This is deliberately independent of
+   * registered-user refresh sessions.
+   */
+  useEffect(() => {
+    if (
+      !user ||
+      user.plan !== "guest" ||
+      !user.id ||
+      typeof window ===
+        "undefined"
+    ) {
+      return;
+    }
+
+    window.localStorage.setItem(
+      GUEST_ID_KEY,
+      user.id
+    );
+  }, [user]);
+
+  useEffect(() => {
+    if (
+      loading ||
+      !user
+    ) {
+      setUsageWarnings(
+        null
+      );
+
+      return;
+    }
+
+    refreshUsageWarnings();
+
+    const interval =
+      window.setInterval(
+        () => {
+          refreshUsageWarnings();
+        },
+        60 * 1000
+      );
+
+    return () => {
+      window.clearInterval(
+        interval
+      );
+    };
+  }, [
+    loading,
+    user,
+    refreshUsageWarnings,
+  ]);
+
   const setAuthenticatedUser =
     useCallback(
-      (nextUser: User) => {
+      (
+        nextUser: User,
+        nextToken?: string | null
+      ) => {
         setUser(nextUser);
+
+        if (
+          nextToken &&
+          typeof window !==
+            "undefined"
+        ) {
+          window.localStorage.setItem(
+            TOKEN_KEY,
+            nextToken
+          );
+        }
+
+        /*
+         * Store the guest identity whenever
+         * a guest session is created.
+         */
+        if (
+          nextUser?.plan ===
+            "guest" &&
+          nextUser?.id &&
+          typeof window !==
+            "undefined"
+        ) {
+          window.localStorage.setItem(
+            GUEST_ID_KEY,
+            nextUser.id
+          );
+        }
       },
       []
     );
@@ -269,18 +443,32 @@ export function AuthProvider({
     () => ({
       user,
       loading,
+
       isAuthenticated:
         Boolean(user),
+
+      isGuest:
+        user?.plan === "guest",
+
+      isRegisteredUser:
+        Boolean(user) &&
+        user?.plan !== "guest",
+
+      usageWarnings,
+
       setAuthenticatedUser,
       logout,
       refreshSession,
+      refreshUsageWarnings,
     }),
     [
       user,
       loading,
+      usageWarnings,
       setAuthenticatedUser,
       logout,
       refreshSession,
+      refreshUsageWarnings,
     ]
   );
 

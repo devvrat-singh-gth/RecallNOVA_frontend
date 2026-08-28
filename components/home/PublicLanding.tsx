@@ -1,6 +1,12 @@
 "use client";
 
+import {
+  useState,
+} from "react";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 import {
   ArrowRight,
   Brain,
@@ -16,7 +22,57 @@ import {
   Zap,
 } from "lucide-react";
 
+import {
+  continueAsGuest,
+} from "@/lib/api";
+
+import {
+  useAuth,
+} from "@/components/auth/AuthProvider";
+
 export default function Home() {
+  const {
+  setAuthenticatedUser,
+} = useAuth();
+
+const router = useRouter();
+
+const [guestLoading, setGuestLoading] =
+  useState(false);
+
+const [guestError, setGuestError] =
+  useState("");
+
+async function handleGuest() {
+  if (guestLoading) return;
+
+  setGuestLoading(true);
+  setGuestError("");
+
+  try {
+const data =
+  await continueAsGuest();
+
+console.log(
+  "GUEST LOGIN RESPONSE:",
+  data
+);
+    setAuthenticatedUser(
+      data.user,
+      data.access_token
+    );
+
+    router.replace("/guest");
+  } catch (error) {
+    setGuestError(
+      error instanceof Error
+        ? error.message
+        : "Unable to continue as guest."
+    );
+  } finally {
+    setGuestLoading(false);
+  }
+}
   return (
 <main
   className="
@@ -328,65 +384,119 @@ export default function Home() {
               understand how your knowledge connects.
             </p>
 
-            <div
-              className="
-                mt-8
-                flex
-                flex-col
-                gap-3
-                sm:flex-row
-              "
-            >
-              <Link
-                href="/login"
-                className="
-                  inline-flex
-                  h-12
-                  items-center
-                  justify-center
-                  gap-2
-                  rounded-2xl
-                  bg-[var(--primary)]
-                  px-6
-                  text-sm
-                  font-bold
-                  text-[var(--bg)]
-                  shadow-xl
-                  transition-all
-                  duration-200
-                  hover:-translate-y-0.5
-                  hover:opacity-90
-                  active:scale-[0.98]
-                "
-              >
-                Get started
-                <ArrowRight size={17} />
-              </Link>
+       <div
+  className="
+    mt-8
+    flex
+    flex-col
+    gap-3
+    sm:flex-row
+    sm:flex-wrap
+  "
+>
+  <Link
+    href="/login"
+    className="
+      inline-flex
+      h-12
+      items-center
+      justify-center
+      gap-2
+      rounded-2xl
+      bg-[var(--primary)]
+      px-6
+      text-sm
+      font-bold
+      text-[var(--bg)]
+      shadow-xl
+      transition-all
+      duration-200
+      hover:-translate-y-0.5
+      hover:opacity-90
+      active:scale-[0.98]
+    "
+  >
+    Get started
+    <ArrowRight size={17} />
+  </Link>
+<button
+  type="button"
+  onClick={handleGuest}
+  disabled={guestLoading}
+  className="
+    inline-flex
+    h-12
+    items-center
+    justify-center
+    gap-2
+    rounded-2xl
+    border
+    border-[var(--border)]
+    bg-[var(--card)]
+    px-6
+    text-sm
+    font-semibold
+    transition-all
+    duration-200
+    hover:-translate-y-0.5
+    hover:bg-white/[0.06]
+    active:scale-[0.98]
+    disabled:cursor-not-allowed
+    disabled:opacity-50
+  "
+>
+  {guestLoading
+    ? "Starting guest session..."
+    : "Continue as Guest"}
 
-              <a
-                href="#features"
+  {!guestLoading && (
+    <ArrowRight size={17} />
+  )}
+</button>
+
+  <a
+    href="#features"
+    className="
+      inline-flex
+      h-12
+      items-center
+      justify-center
+      rounded-2xl
+      border
+      border-[var(--border)]
+      bg-[var(--card)]
+      px-6
+      text-sm
+      font-semibold
+      transition-all
+      duration-200
+      hover:-translate-y-0.5
+      hover:bg-white/[0.06]
+      active:scale-[0.98]
+    "
+  >
+    Explore features
+  </a>
+</div>
+
+            {guestError && (
+              <div
+                role="alert"
                 className="
-                  inline-flex
-                  h-12
-                  items-center
-                  justify-center
-                  rounded-2xl
+                  mt-4
+                  rounded-xl
                   border
-                  border-[var(--border)]
-                  bg-[var(--card)]
-                  px-6
+                  border-red-400/20
+                  bg-red-500/10
+                  px-4
+                  py-3
                   text-sm
-                  font-semibold
-                  transition-all
-                  duration-200
-                  hover:-translate-y-0.5
-                  hover:bg-white/[0.06]
-                  active:scale-[0.98]
+                  text-red-300
                 "
               >
-                Explore features
-              </a>
-            </div>
+                {guestError}
+              </div>
+            )}
 
             <div
               className="

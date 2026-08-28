@@ -18,18 +18,14 @@ import {
   User,
 } from "lucide-react";
 
-import {
-  GoogleLogin,
-} from "@react-oauth/google";
+import { GoogleLogin } from "@react-oauth/google";
 
 import {
   signupWithEmail,
   loginWithGoogle,
 } from "@/lib/api";
 
-import {
-  useAuth,
-} from "@/components/auth/AuthProvider";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -53,8 +49,10 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] =
     useState(false);
 
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState(false);
+  const [
+    showConfirmPassword,
+    setShowConfirmPassword,
+  ] = useState(false);
 
   const [loading, setLoading] =
     useState(false);
@@ -90,9 +88,7 @@ export default function SignupPage() {
         );
       }
 
-      if (
-        password.length < 8
-      ) {
+      if (password.length < 8) {
         throw new Error(
           "Password must contain at least 8 characters."
         );
@@ -113,19 +109,26 @@ export default function SignupPage() {
           .timeZone ||
         "UTC";
 
-      await signupWithEmail(
-        normalizedEmail,
-        password,
-        normalizedName ||
-          undefined,
-        timezone
+      const data =
+        await signupWithEmail(
+          normalizedEmail,
+          password,
+          normalizedName || undefined,
+          timezone
+        );
+
+      if (!data?.access_token) {
+        throw new Error(
+          "Account was created, but authentication could not be completed."
+        );
+      }
+
+      setAuthenticatedUser(
+        data.user,
+        data.access_token
       );
 
-      router.replace(
-        `/verify-email?status=pending&email=${encodeURIComponent(
-          normalizedEmail
-        )}`
-      );
+      router.replace("/");
     } catch (err) {
       console.error(
         "EMAIL SIGNUP ERROR:",
@@ -166,7 +169,8 @@ export default function SignupPage() {
         );
 
       setAuthenticatedUser(
-        data.user
+        data.user,
+        data.access_token
       );
 
       router.replace("/");
@@ -186,38 +190,34 @@ export default function SignupPage() {
     }
   }
 
+  function handleGoogleError() {
+    setGoogleLoading(false);
+
+    setError(
+      "Google sign-in was cancelled or could not be completed."
+    );
+  }
+
   return (
     <main
       className="
         min-h-[100dvh]
         w-full
         overflow-y-auto
+        overflow-x-hidden
+        overscroll-contain
+        custom-scrollbar
         px-5
         py-10
         sm:py-14
-        flex
-        items-center
-        justify-center
       "
       style={{
-        background:
-          "var(--bg)",
-        color:
-          "var(--text)",
+        background: "var(--bg)",
+        color: "var(--text)",
       }}
     >
-      <div
-        className="
-          w-full
-          max-w-md
-        "
-      >
-        <div
-          className="
-            mb-8
-            text-center
-          "
-        >
+      <div className="mx-auto flex min-h-[calc(100dvh-5rem)] w-full max-w-md flex-col justify-center">
+        <div className="mb-8 text-center">
           <Link
             href="/"
             className="
@@ -241,21 +241,17 @@ export default function SignupPage() {
               style={{
                 background:
                   "var(--primary)",
-                color:
-                  "var(--bg)",
+                color: "var(--bg)",
               }}
             >
               <Sparkles size={19} />
             </span>
 
-            <span className="drop-shadow-[0_0_12px_rgba(132,204,22,.24)]">
-              RecallNova
-            </span>
+            <span>RecallNova</span>
           </Link>
 
           <p className="mt-3 text-sm opacity-60">
-            Create your private
-            learning workspace.
+            Create your private learning workspace.
           </p>
         </div>
 
@@ -267,19 +263,13 @@ export default function SignupPage() {
           "
         >
           <div className="mb-7">
-            <h1
-              className="
-                text-3xl
-                font-black
-              "
-            >
+            <h1 className="text-3xl font-black">
               Create your account
             </h1>
 
             <p className="mt-2 text-sm opacity-60">
-              Use a RecallNova email
-              account or continue with
-              Google.
+              Create a RecallNova email
+              account or continue with Google.
             </p>
           </div>
 
@@ -290,12 +280,7 @@ export default function SignupPage() {
             <div>
               <label
                 htmlFor="name"
-                className="
-                  mb-2
-                  block
-                  text-sm
-                  font-medium
-                "
+                className="mb-2 block text-sm font-medium"
               >
                 Name
               </label>
@@ -324,18 +309,19 @@ export default function SignupPage() {
                   }
                   placeholder="Your name"
                   autoComplete="name"
+                  maxLength={100}
                   className="
                     auth-input
                     h-12
                     w-full
                     rounded-xl
                     border
+                    border-[var(--border)]
                     bg-[var(--card)]
                     pl-11
                     pr-4
                     outline-none
                     transition
-                    border-[var(--border)]
                     focus:border-lime-400/50
                     focus:ring-2
                     focus:ring-lime-400/30
@@ -347,12 +333,7 @@ export default function SignupPage() {
             <div>
               <label
                 htmlFor="email"
-                className="
-                  mb-2
-                  block
-                  text-sm
-                  font-medium
-                "
+                className="mb-2 block text-sm font-medium"
               >
                 Email address
               </label>
@@ -389,12 +370,12 @@ export default function SignupPage() {
                     w-full
                     rounded-xl
                     border
+                    border-[var(--border)]
                     bg-[var(--card)]
                     pl-11
                     pr-4
                     outline-none
                     transition
-                    border-[var(--border)]
                     focus:border-lime-400/50
                     focus:ring-2
                     focus:ring-lime-400/30
@@ -406,12 +387,7 @@ export default function SignupPage() {
             <div>
               <label
                 htmlFor="password"
-                className="
-                  mb-2
-                  block
-                  text-sm
-                  font-medium
-                "
+                className="mb-2 block text-sm font-medium"
               >
                 Password
               </label>
@@ -453,12 +429,12 @@ export default function SignupPage() {
                     w-full
                     rounded-xl
                     border
+                    border-[var(--border)]
                     bg-[var(--card)]
                     pl-11
                     pr-11
                     outline-none
                     transition
-                    border-[var(--border)]
                     focus:border-lime-400/50
                     focus:ring-2
                     focus:ring-lime-400/30
@@ -469,8 +445,7 @@ export default function SignupPage() {
                   type="button"
                   onClick={() =>
                     setShowPassword(
-                      (value) =>
-                        !value
+                      (value) => !value
                     )
                   }
                   className="
@@ -481,9 +456,15 @@ export default function SignupPage() {
                     rounded-lg
                     p-1.5
                     opacity-50
+                    transition
                     hover:bg-white/5
                     hover:opacity-100
                   "
+                  aria-label={
+                    showPassword
+                      ? "Hide password"
+                      : "Show password"
+                  }
                 >
                   {showPassword ? (
                     <EyeOff size={17} />
@@ -497,12 +478,7 @@ export default function SignupPage() {
             <div>
               <label
                 htmlFor="confirm-password"
-                className="
-                  mb-2
-                  block
-                  text-sm
-                  font-medium
-                "
+                className="mb-2 block text-sm font-medium"
               >
                 Confirm password
               </label>
@@ -527,9 +503,7 @@ export default function SignupPage() {
                       ? "text"
                       : "password"
                   }
-                  value={
-                    confirmPassword
-                  }
+                  value={confirmPassword}
                   onChange={(event) =>
                     setConfirmPassword(
                       event.target.value
@@ -546,12 +520,12 @@ export default function SignupPage() {
                     w-full
                     rounded-xl
                     border
+                    border-[var(--border)]
                     bg-[var(--card)]
                     pl-11
                     pr-11
                     outline-none
                     transition
-                    border-[var(--border)]
                     focus:border-lime-400/50
                     focus:ring-2
                     focus:ring-lime-400/30
@@ -562,8 +536,7 @@ export default function SignupPage() {
                   type="button"
                   onClick={() =>
                     setShowConfirmPassword(
-                      (value) =>
-                        !value
+                      (value) => !value
                     )
                   }
                   className="
@@ -574,9 +547,15 @@ export default function SignupPage() {
                     rounded-lg
                     p-1.5
                     opacity-50
+                    transition
                     hover:bg-white/5
                     hover:opacity-100
                   "
+                  aria-label={
+                    showConfirmPassword
+                      ? "Hide confirmation password"
+                      : "Show confirmation password"
+                  }
                 >
                   {showConfirmPassword ? (
                     <EyeOff size={17} />
@@ -620,31 +599,18 @@ export default function SignupPage() {
           {error && (
             <div
               role="alert"
-              className="
-                mt-4
-                rounded-xl
-                p-3
-                text-sm
-              "
+              className="mt-4 rounded-xl p-3 text-sm"
               style={{
                 background:
                   "rgba(239,68,68,.10)",
-                color:
-                  "#f87171",
+                color: "#f87171",
               }}
             >
               {error}
             </div>
           )}
 
-          <div
-            className="
-              my-7
-              flex
-              items-center
-              gap-4
-            "
-          >
+          <div className="my-7 flex items-center gap-4">
             <div
               className="h-px flex-1"
               style={{
@@ -666,43 +632,44 @@ export default function SignupPage() {
             />
           </div>
 
-          <div className="w-full">
-            <div className="w-full overflow-hidden rounded-xl">
-              <GoogleLogin
-                onSuccess={(
-                  response
-                ) => {
-                  if (
-                    !response.credential
-                  ) {
-                    setError(
-                      "Google sign-in failed."
-                    );
-                    return;
-                  }
-
-                  handleGoogleSuccess(
-                    response.credential
-                  );
-                }}
-                onError={() =>
-                  setError(
-                    "Google sign-in was cancelled or could not be completed."
-                  )
+          <div className="w-full overflow-hidden rounded-xl">
+            <GoogleLogin
+              onSuccess={(response) => {
+                if (!response.credential) {
+                  handleGoogleError();
+                  return;
                 }
-                useOneTap={false}
-                theme="outline"
-                size="large"
-                width="100%"
-                text="continue_with"
-                shape="rectangular"
-              />
-            </div>
+
+                handleGoogleSuccess(
+                  response.credential
+                );
+              }}
+              onError={handleGoogleError}
+              useOneTap={false}
+              theme="outline"
+              size="large"
+              width="100%"
+              text="continue_with"
+              shape="rectangular"
+            />
           </div>
 
+          {googleLoading && (
+            <p className="mt-3 text-center text-xs opacity-50">
+              Signing you in with Google...
+            </p>
+          )}
+
           <p className="mt-7 text-center text-xs leading-relaxed opacity-50">
-            By creating an account, you
-            agree to RecallNova&apos;s{" "}
+            Your RecallNova password is
+            separate from your Google password.
+            Google authentication is handled
+            directly by Google.
+          </p>
+
+          <p className="mt-4 text-center text-xs leading-relaxed opacity-50">
+            By creating an account, you agree to
+            RecallNova&apos;s{" "}
             <Link
               href="/terms"
               className="underline"
@@ -724,11 +691,7 @@ export default function SignupPage() {
           Already have an account?{" "}
           <Link
             href="/login"
-            className="
-              font-semibold
-              text-[var(--primary)]
-              hover:underline
-            "
+            className="font-semibold text-[var(--primary)] hover:underline"
           >
             Sign in
           </Link>

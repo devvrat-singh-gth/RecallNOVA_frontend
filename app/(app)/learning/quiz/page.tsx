@@ -19,10 +19,14 @@ import {
 } from "lucide-react";
 export default function QuizPage() {
   const router = useRouter();
+const [docs, setDocs] = useState<any[]>([]);
+const [existsMap, setExistsMap] = useState<any>({});
 
-  const [docs, setDocs] = useState<any[]>([]);
-  const [existsMap, setExistsMap] = useState<any>({});
-  const [loading, setLoading] = useState(false);
+const [docsLoading, setDocsLoading] =
+  useState(true);
+
+const [loading, setLoading] =
+  useState(false);
 
   const [showPopup, setShowPopup] = useState(false);
   const [popupDocId, setPopupDocId] = useState("");
@@ -38,28 +42,50 @@ export default function QuizPage() {
     loadDocuments();
   }, []);
 
-  const loadDocuments = async () => {
+const loadDocuments = async () => {
+  try {
+    setDocsLoading(true);
+
     const res = await getDocuments();
 
-    const list = res.documents || [];
+    const list =
+      Array.isArray(res?.documents)
+        ? res.documents
+        : [];
 
     setDocs(list);
 
     const map: any = {};
 
     for (const d of list) {
-      const r = await checkQuiz(d._id);
-      const p = await getQuizProgress(d._id);
+      const r =
+        await checkQuiz(d._id);
+
+      const p =
+        await getQuizProgress(d._id);
 
       map[d._id] = {
         exists: r.exists,
-        count: r.count,
+        count: r.count || 0,
         progress: p.progress,
       };
     }
 
     setExistsMap(map);
-  };
+
+  } catch (err) {
+    console.error(
+      "QUIZ DOCUMENT LOAD FAILED:",
+      err
+    );
+
+    setDocs([]);
+    setExistsMap({});
+
+  } finally {
+    setDocsLoading(false);
+  }
+};
 
   const shuffleArray = (arr: any[]) => {
     return [...arr].sort(() => Math.random() - 0.5);
@@ -190,8 +216,7 @@ router.push(
 <div
   className="
     w-full
-max-w-6xl
-xl:max-w-7xl
+    max-w-6xl
     mx-auto
     mt-4
     md:mt-10
@@ -282,38 +307,140 @@ xl:max-w-7xl
   </div>
 
 </div>
-
 <div className="p-3 sm:p-6">
- <div className="
-  hidden
-  md:grid
-  md:grid-cols-12
-  px-4
-  pb-3
-  mb-3
-  text-xs
-  uppercase
-  tracking-wider
-  opacity-50
-  border-b
-  border-white/10
-">          <div className="col-span-5">DOCUMENT</div>
-          <div className="col-span-2 text-center">STATUS</div>
-          <div className="col-span-2 text-center">TOTAL</div>
-          <div className="col-span-3 text-center">ACTION</div>
+
+{docsLoading ? (
+    <div
+      className="
+        mx-auto
+        w-full
+        max-w-6xl
+        min-h-[320px]
+
+        flex
+        items-center
+        justify-center
+
+        rounded-2xl
+
+        border
+        border-white/10
+
+        bg-white/[0.025]
+      "
+    >
+      <div
+        className="
+          flex
+          flex-col
+          items-center
+          gap-4
+          text-center
+        "
+      >
+        <div
+          className="
+            h-12
+            w-12
+            sm:h-14
+            sm:w-14
+            rounded-full
+            border-4
+            border-white/10
+            border-t-lime-400
+            animate-spin
+          "
+        />
+
+        <p
+          className="
+            text-sm
+            sm:text-base
+            font-semibold
+            opacity-80
+          "
+        >
+          Loading quizzes...
+        </p>
+      </div>
+    </div>
+  ) : docs.length === 0 ? (
+    <div
+      className="
+        mx-auto
+        w-full
+        max-w-2xl
+
+        rounded-2xl
+
+        border
+        border-white/10
+
+        bg-white/[0.025]
+
+        px-5
+        py-12
+
+        sm:px-8
+        sm:py-16
+
+        text-center
+      "
+    >
+      <p
+        className="
+          text-base
+          sm:text-lg
+          md:text-xl
+
+          font-bold
+
+          leading-7
+          sm:leading-8
+
+          opacity-85
+        "
+      >
+        UPLOAD DOCUMENTS IN THE UPLOAD PAGE TO START!
+      </p>
+    </div>
+  ) : (
+    <>
+      <div
+        className="
+          hidden
+          md:grid
+          md:grid-cols-12
+          px-4
+          pb-3
+          mb-3
+          text-xs
+          uppercase
+          tracking-wider
+          opacity-50
+          border-b
+          border-white/10
+        "
+      >
+        <div className="col-span-5">
+          DOCUMENT
         </div>
 
-        {loading && (
-          <div className="text-center mb-4">
-            Loading...
-          </div>
-        )}
+        <div className="col-span-2 text-center">
+          STATUS
+        </div>
 
-<div className="
-  space-y-3
-  mt-4
-">
-          {docs.map((d) => {
+        <div className="col-span-2 text-center">
+          TOTAL
+        </div>
+
+        <div className="col-span-3 text-center">
+          ACTION
+        </div>
+      </div>
+
+      <div className="space-y-3 mt-4">
+        {docs.map((d) => {
 
             const item = existsMap[d._id];
 
@@ -662,9 +789,12 @@ className="
             );
           })}
         </div>
-      </div>
+    </>
+  )}
 
-      {/* START POPUP */}
+</div>
+
+{/* START POPUP */}
 
       {showStartPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center">

@@ -6,7 +6,6 @@ import {
 } from "react";
 
 import Link from "next/link";
-
 import { useRouter } from "next/navigation";
 
 import {
@@ -18,13 +17,9 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import {
-  GoogleLogin,
-} from "@react-oauth/google";
+import { GoogleLogin } from "@react-oauth/google";
 
-import {
-  useAuth,
-} from "@/components/auth/AuthProvider";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 import {
   loginWithEmail,
@@ -91,7 +86,8 @@ export default function LoginPage() {
         );
 
       setAuthenticatedUser(
-        data.user
+        data.user,
+        data.access_token
       );
 
       router.replace("/");
@@ -135,7 +131,8 @@ export default function LoginPage() {
         );
 
       setAuthenticatedUser(
-        data.user
+        data.user,
+        data.access_token
       );
 
       router.replace("/");
@@ -170,34 +167,19 @@ export default function LoginPage() {
         w-full
         overflow-y-auto
         overflow-x-hidden
+        overscroll-contain
+        custom-scrollbar
         px-5
         py-10
         sm:py-14
-        flex
-        items-center
-        justify-center
       "
       style={{
-        background:
-          "var(--bg)",
-        color:
-          "var(--text)",
+        background: "var(--bg)",
+        color: "var(--text)",
       }}
     >
-      <div
-        className="
-          w-full
-          max-w-md
-        "
-      >
-        {/* BRAND */}
-
-        <div
-          className="
-            mb-8
-            text-center
-          "
-        >
+      <div className="mx-auto flex min-h-[calc(100dvh-5rem)] w-full max-w-md flex-col justify-center">
+        <div className="mb-8 text-center">
           <Link
             href="/"
             className="
@@ -231,28 +213,15 @@ export default function LoginPage() {
               <Sparkles size={19} />
             </span>
 
-            <span
-              className="
-                drop-shadow-[0_0_12px_rgba(132,204,22,.24)]
-              "
-            >
+            <span>
               RecallNova
             </span>
           </Link>
 
-          <p
-            className="
-              mt-3
-              text-sm
-              opacity-60
-            "
-          >
-            Your AI-powered
-            learning workspace.
+          <p className="mt-3 text-sm opacity-60">
+            Your AI-powered learning workspace.
           </p>
         </div>
-
-        {/* CARD */}
 
         <div
           className="
@@ -262,44 +231,23 @@ export default function LoginPage() {
           "
         >
           <div className="mb-7">
-            <h1
-              className="
-                text-3xl
-                font-black
-              "
-            >
+            <h1 className="text-3xl font-black">
               Welcome back
             </h1>
 
-            <p
-              className="
-                mt-2
-                text-sm
-                opacity-60
-              "
-            >
-              Sign in to continue
-              learning.
+            <p className="mt-2 text-sm opacity-60">
+              Sign in to continue learning.
             </p>
           </div>
 
-          {/* EMAIL */}
-
           <form
-            onSubmit={
-              handleEmailLogin
-            }
+            onSubmit={handleEmailLogin}
             className="space-y-4"
           >
             <div>
               <label
                 htmlFor="email"
-                className="
-                  mb-2
-                  block
-                  text-sm
-                  font-medium
-                "
+                className="mb-2 block text-sm font-medium"
               >
                 Email address
               </label>
@@ -307,7 +255,6 @@ export default function LoginPage() {
               <div className="relative">
                 <Mail
                   size={17}
-                  aria-hidden="true"
                   className="
                     pointer-events-none
                     absolute
@@ -322,78 +269,47 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(
-                    event
-                  ) =>
+                  onChange={(event) =>
                     setEmail(
-                      event.target
-                        .value
+                      event.target.value
                     )
                   }
                   placeholder="you@example.com"
                   autoComplete="email"
                   inputMode="email"
+                  required
                   className="
                     auth-input
                     h-12
                     w-full
                     rounded-xl
                     border
+                    border-[var(--border)]
                     bg-[var(--card)]
                     pl-11
                     pr-4
                     text-[var(--text)]
                     outline-none
                     transition
-                    border-[var(--border)]
                     focus:border-lime-400/50
                     focus:ring-2
                     focus:ring-lime-400/30
                   "
-                  required
                 />
               </div>
             </div>
 
-            {/* PASSWORD */}
-
             <div>
-              <div
-                className="
-                  mb-2
-                  flex
-                  items-center
-                  justify-between
-                "
+              <label
+                htmlFor="password"
+                className="mb-2 block text-sm font-medium"
               >
-                <label
-                  htmlFor="password"
-                  className="
-                    text-sm
-                    font-medium
-                  "
-                >
-                  Password
-                </label>
-
-                <Link
-                  href="/forgot-password"
-                  className="
-                    text-xs
-                    font-semibold
-                    text-[var(--primary)]
-                    transition
-                    hover:underline
-                  "
-                >
-                  Forgot password?
-                </Link>
-              </div>
+                Password
+              </label>
 
               <div className="relative">
                 <LockKeyhole
                   size={17}
-                  aria-hidden="true"
                   className="
                     pointer-events-none
                     absolute
@@ -412,42 +328,38 @@ export default function LoginPage() {
                       : "password"
                   }
                   value={password}
-                  onChange={(
-                    event
-                  ) =>
+                  onChange={(event) =>
                     setPassword(
-                      event.target
-                        .value
+                      event.target.value
                     )
                   }
                   placeholder="Enter your password"
                   autoComplete="current-password"
+                  required
                   className="
                     auth-input
                     h-12
                     w-full
                     rounded-xl
                     border
+                    border-[var(--border)]
                     bg-[var(--card)]
                     pl-11
                     pr-11
                     text-[var(--text)]
                     outline-none
                     transition
-                    border-[var(--border)]
                     focus:border-lime-400/50
                     focus:ring-2
                     focus:ring-lime-400/30
                   "
-                  required
                 />
 
                 <button
                   type="button"
                   onClick={() =>
                     setShowPassword(
-                      (value) =>
-                        !value
+                      (value) => !value
                     )
                   }
                   className="
@@ -469,13 +381,9 @@ export default function LoginPage() {
                   }
                 >
                   {showPassword ? (
-                    <EyeOff
-                      size={17}
-                    />
+                    <EyeOff size={17} />
                   ) : (
-                    <Eye
-                      size={17}
-                    />
+                    <Eye size={17} />
                   )}
                 </button>
               </div>
@@ -506,14 +414,10 @@ export default function LoginPage() {
                 : "Sign in"}
 
               {!loading && (
-                <ArrowRight
-                  size={18}
-                />
+                <ArrowRight size={18} />
               )}
             </button>
           </form>
-
-          {/* ERROR */}
 
           {error && (
             <div
@@ -535,43 +439,21 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* DIVIDER */}
-
-          <div
-            className="
-              my-7
-              flex
-              items-center
-              gap-4
-            "
-          >
+          <div className="my-7 flex items-center gap-4">
             <div
-              className="
-                h-px
-                flex-1
-              "
+              className="h-px flex-1"
               style={{
                 background:
                   "var(--border)",
               }}
             />
 
-            <span
-              className="
-                text-xs
-                uppercase
-                tracking-widest
-                opacity-40
-              "
-            >
+            <span className="text-xs uppercase tracking-widest opacity-40">
               or
             </span>
 
             <div
-              className="
-                h-px
-                flex-1
-              "
+              className="h-px flex-1"
               style={{
                 background:
                   "var(--border)",
@@ -579,71 +461,44 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* GOOGLE */}
-
-          <div className="w-full">
-            <div
-              className="
-                w-full
-                overflow-hidden
-                rounded-xl
-              "
-            >
-              <GoogleLogin
-                onSuccess={(
-                  response
-                ) => {
-                  if (
-                    !response.credential
-                  ) {
-                    handleGoogleError();
-                    return;
-                  }
-
-                  handleGoogleSuccess(
-                    response.credential
-                  );
-                }}
-                onError={
-                  handleGoogleError
+          <div className="w-full overflow-hidden rounded-xl">
+            <GoogleLogin
+              onSuccess={(response) => {
+                if (!response.credential) {
+                  handleGoogleError();
+                  return;
                 }
-                useOneTap={false}
-                theme="outline"
-                size="large"
-                width="100%"
-                text="continue_with"
-                shape="rectangular"
-              />
-            </div>
+
+                handleGoogleSuccess(
+                  response.credential
+                );
+              }}
+              onError={handleGoogleError}
+              useOneTap={false}
+              theme="outline"
+              size="large"
+              width="100%"
+              text="continue_with"
+              shape="rectangular"
+            />
           </div>
 
           {googleLoading && (
-            <p
-              className="
-                mt-3
-                text-center
-                text-xs
-                opacity-50
-              "
-            >
-              Signing you in with
-              Google...
+            <p className="mt-3 text-center text-xs opacity-50">
+              Signing you in with Google...
             </p>
           )}
 
-          {/* TERMS */}
+          <p className="mt-7 text-center text-xs leading-relaxed opacity-50">
+            Email/password accounts use a
+            separate RecallNova password.
+            Google accounts continue using
+            Google authentication.
+          </p>
 
-          <p
-            className="
-              mt-7
-              text-center
-              text-xs
-              leading-relaxed
-              opacity-50
-            "
-          >
-            By continuing, you agree
-            to RecallNova&apos;s{" "}
+          <p className="mt-4 text-center text-xs leading-relaxed opacity-50">
+            By continuing, you agree to
+            RecallNova&apos;s{" "}
             <Link
               href="/terms"
               className="underline"
@@ -661,26 +516,11 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* SIGNUP */}
-
-        <p
-          className="
-            mt-6
-            pb-2
-            text-center
-            text-sm
-            opacity-50
-          "
-        >
+        <p className="mt-6 pb-2 text-center text-sm opacity-50">
           New to RecallNova?{" "}
           <Link
             href="/signup"
-            className="
-              font-semibold
-              text-[var(--primary)]
-              opacity-100
-              hover:underline
-            "
+            className="font-semibold text-[var(--primary)] hover:underline"
           >
             Create an account
           </Link>

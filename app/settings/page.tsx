@@ -40,8 +40,22 @@ export default function SettingsPage() {
   const [flashcardCount, setFlashcardCount] =
     useState(10);
 
-  const [saved, setSaved] =
-    useState(false);
+const [saved, setSaved] =
+  useState(false);
+
+/* -------------------------------------------------------
+   VALUE LIMITS
+------------------------------------------------------- */
+
+const clamp = (
+  value: number,
+  min: number,
+  max: number
+) =>
+  Math.min(
+    max,
+    Math.max(min, value)
+  );
 
   /* -------------------------------------------------------
      PROFILE IMAGE
@@ -543,28 +557,27 @@ export default function SettingsPage() {
                     Quiz Timer
                   </label>
                 </div>
-
-                <input
-                  id="quizTimer"
-                  type="number"
-                  min={1}
-                  value={quizTimer}
-                  onChange={(e) =>
-                    setQuizTimer(
-                      Math.max(
-                        1,
-                        Number(
-                          e.target.value
-                        ) || 1
-                      )
-                    )
-                  }
-                  className="
-                    input
-                    mt-3
-                    w-full
-                  "
-                />
+<input
+  id="quizTimer"
+  type="number"
+  min={1}
+  value={quizTimer}
+  onChange={(e) =>
+    setQuizTimer(
+      Math.max(
+        1,
+        Number(
+          e.target.value
+        ) || 1
+      )
+    )
+  }
+  className="
+    input
+    mt-3
+    w-full
+  "
+/>
 
                 <p
                   className="
@@ -611,11 +624,12 @@ export default function SettingsPage() {
                   value={quizCount}
                   onChange={(e) =>
                     setQuizCount(
-                      Math.max(
-                        1,
+                      clamp(
                         Number(
                           e.target.value
-                        ) || 1
+                        ) || 1,
+                        1,
+                        10
                       )
                     )
                   }
@@ -671,11 +685,12 @@ export default function SettingsPage() {
                   value={flashcardCount}
                   onChange={(e) =>
                     setFlashcardCount(
-                      Math.max(
-                        1,
+                      clamp(
                         Number(
                           e.target.value
-                        ) || 1
+                        ) || 1,
+                        1,
+                        20
                       )
                     )
                   }
