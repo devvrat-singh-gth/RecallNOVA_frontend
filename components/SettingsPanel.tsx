@@ -53,8 +53,8 @@ useEffect(() => {
           <div className="mb-4">
             <p className="font-semibold mb-1">Theme</p>
             <div className="flex gap-2 flex-wrap">
-              {["light", "dark", "mint", "neon"].map((t) => (
-                <button
+{(["light", "dark", "mint", "neon"] as const).map((t) => (
+                  <button
                   key={t}
                   onClick={() => setTheme(t)}
                   className={`px-3 py-1 rounded border ${
