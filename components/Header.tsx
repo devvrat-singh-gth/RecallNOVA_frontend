@@ -14,9 +14,6 @@ import {
   Network,
 } from "lucide-react";
 
-const ATLAS_RETURN_KEY =
-  "recallnova_atlas_return_path";
-
 export default function Header() {
   const pathname = usePathname();
 
@@ -25,31 +22,12 @@ export default function Header() {
     useState(false);
 
   /*
-   * Keep track of the last valid app route.
-   * /doc-atlas is intentionally excluded.
-   */
-  useEffect(() => {
-    if (
-      pathname &&
-      pathname !== "/doc-atlas" &&
-      !pathname.startsWith("/doc-atlas/")
-    ) {
-      sessionStorage.setItem(
-        ATLAS_RETURN_KEY,
-        pathname
-      );
-    }
-  }, [pathname]);
-
-  /*
-   * Close notification with Escape.
+   * Close the notification with Escape.
    */
   useEffect(() => {
     if (!showAtlasNotice) return;
 
-    const handleKeyDown = (
-      event: KeyboardEvent
-    ) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setShowAtlasNotice(false);
       }
@@ -67,30 +45,6 @@ export default function Header() {
       );
     };
   }, [showAtlasNotice]);
-
-  const openAtlasNotice = () => {
-    /*
-     * Save the page the user was actually on
-     * before opening the notice.
-     */
-    if (
-      pathname &&
-      pathname !== "/doc-atlas" &&
-      !pathname.startsWith("/doc-atlas/")
-    ) {
-      sessionStorage.setItem(
-        ATLAS_RETURN_KEY,
-        pathname
-      );
-    }
-
-    setOpen(false);
-    setShowAtlasNotice(true);
-  };
-
-  const closeAtlasNotice = () => {
-    setShowAtlasNotice(false);
-  };
 
   const nav = [
     {
@@ -230,6 +184,7 @@ export default function Header() {
 
                 /*
                  * Doc Atlas is temporarily disabled.
+                 * Show notification instead of navigating.
                  */
                 if (
                   item.href === "/doc-atlas"
@@ -238,7 +193,10 @@ export default function Header() {
                     <button
                       key={item.name}
                       type="button"
-                      onClick={openAtlasNotice}
+                      onClick={() => {
+                        setOpen(false);
+                        setShowAtlasNotice(true);
+                      }}
                       className="
                         group
                         mb-2
@@ -299,7 +257,6 @@ export default function Header() {
                       duration-300
                       hover:translate-x-1
                       hover:scale-[1.02]
-
                       ${
                         active
                           ? ""
@@ -353,20 +310,19 @@ export default function Header() {
             justify-center
             overflow-y-auto
             bg-black/60
-            px-4
-            py-6
             backdrop-blur-sm
-            sm:px-6
+            p-4
+            sm:p-6
           "
           onMouseDown={(event) => {
             /*
-             * Clicking outside the card closes it.
+             * Clicking outside the notification closes it.
              */
             if (
               event.target ===
               event.currentTarget
             ) {
-              closeAtlasNotice();
+              setShowAtlasNotice(false);
             }
           }}
         >
@@ -401,7 +357,9 @@ export default function Header() {
 
             <button
               type="button"
-              onClick={closeAtlasNotice}
+              onClick={() =>
+                setShowAtlasNotice(false)
+              }
               aria-label="Close notification"
               className="
                 absolute
@@ -420,8 +378,6 @@ export default function Header() {
                 active:scale-95
                 sm:right-4
                 sm:top-4
-                sm:h-10
-                sm:w-10
               "
             >
               <X size={18} />
@@ -478,15 +434,16 @@ export default function Header() {
                 "
               >
                 This feature is currently under
-                development. We’re building a
-                visual knowledge layer to help you
-                explore connections between your
-                documents and learning activity.
+                further development. We’re building
+                the visual knowledge layer and it
+                will be available in a future update.
               </p>
 
               <button
                 type="button"
-                onClick={closeAtlasNotice}
+                onClick={() =>
+                  setShowAtlasNotice(false)
+                }
                 className="
                   mt-6
                   w-full
@@ -508,7 +465,7 @@ export default function Header() {
                     "var(--bg)",
                 }}
               >
-                Got it
+                Continue
               </button>
             </div>
           </div>
