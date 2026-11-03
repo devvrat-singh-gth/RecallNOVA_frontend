@@ -186,8 +186,7 @@ export default function LoginPage() {
           -top-40 left-1/4
           h-80 w-80 rounded-full
           bg-[var(--primary)] opacity-[0.07]
-          blur-3xl
-        "
+          blur-3xl"
       />
 
 <div
