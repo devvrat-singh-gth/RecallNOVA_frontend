@@ -107,7 +107,7 @@ console.log(
             flex
             min-h-16
             w-full
-            max-w-7xl
+            max-w-[1600px]
             items-center
             justify-between
             gap-4
@@ -299,7 +299,7 @@ console.log(
             blur-3xl
           "
         />
-
+{/* max-w-7xl */}
         <div
           className="
             relative
@@ -307,16 +307,15 @@ console.log(
             grid
             min-h-[calc(100vh-64px)]
             w-full
-            max-w-7xl
+            max-w-[1600px]
+            
             items-center
-            gap-14
+            gap-[clamp(2rem,4vw,3.5rem)]
             px-4
-            py-16
-            sm:px-6
+py-[clamp(3rem,7vw,6rem)]
             sm:py-20
             lg:grid-cols-2
             lg:px-8
-            lg:py-24
           "
         >
           {/* LEFT */}
@@ -353,13 +352,11 @@ console.log(
 
             <h1
               className="
-                text-4xl
-                font-black
-                leading-[1.02]
-                tracking-tight
-                sm:text-5xl
-                md:text-6xl
-                lg:text-7xl
+text-[clamp(2.35rem,5.2vw,4.75rem)]
+font-black
+leading-[1.04]
+tracking-[-0.045em]
+text-balance
               "
             >
               Turn your PDFs into a{" "}
@@ -815,7 +812,7 @@ console.log(
           className="
             mx-auto
             w-full
-            max-w-7xl
+            max-w-[1600px]
             px-4
             py-20
             sm:px-6
@@ -839,10 +836,11 @@ console.log(
             <h2
               className="
                 mt-3
-                text-3xl
-                font-black
-                tracking-tight
-                sm:text-4xl
+                text-[clamp(1.8rem,3.6vw,2.75rem)]
+font-black
+leading-[1.12]
+tracking-[-0.035em]
+text-balance
               "
             >
               From document to understanding.
@@ -977,7 +975,7 @@ console.log(
           className="
             mx-auto
             w-full
-            max-w-7xl
+            max-w-
             px-4
             py-20
             sm:px-6
@@ -1137,7 +1135,7 @@ console.log(
             mx-auto
             grid
             w-full
-            max-w-7xl
+            max-w-[1600px]
             gap-10
             px-4
             py-20
@@ -1160,6 +1158,7 @@ console.log(
                 text-xs
                 font-bold
                 text-[var(--primary)]
+                max-w-7xl
               "
             >
               <Brain size={14} />
@@ -1267,7 +1266,7 @@ console.log(
             mx-auto
             grid
             w-full
-            max-w-7xl
+            max-w-[1600px]
             gap-10
             px-4
             py-20
@@ -1373,6 +1372,7 @@ console.log(
             className="
               order-1
               lg:order-2
+              px-12
             "
           >
             <div
@@ -1408,7 +1408,7 @@ console.log(
             <p
               className="
                 mt-4
-                max-w-xl
+                max-w-7xl
                 text-sm
                 leading-7
                 opacity-65
@@ -1623,7 +1623,7 @@ console.log(
             mx-auto
             flex
             w-full
-            max-w-7xl
+            max-w-[1600px]
             flex-col
             gap-6
             px-4

@@ -1,6 +1,13 @@
+
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
 type Theme = "light" | "dark" | "mint" | "neon";
 
@@ -11,44 +18,61 @@ type ThemeContextType = {
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
+const THEMES: Theme[] = ["light", "dark", "mint", "neon"];
+
+function isTheme(value: string | null): value is Theme {
+  return value !== null && THEMES.includes(value as Theme);
+}
+
 export function useTheme() {
   const context = useContext(ThemeContext);
-  if (!context) throw new Error("useTheme must be used inside ThemeProvider");
+
+  if (!context) {
+    throw new Error("useTheme must be used inside ThemeProvider");
+  }
+
   return context;
 }
 
-export default function ThemeProvider({ children }: any) {
+export default function ThemeProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [theme, setTheme] = useState<Theme>("dark");
+  const [hasLoadedPreference, setHasLoadedPreference] = useState(false);
 
-  // 🔥 Load saved theme
+  // Read the saved preference before persisting or applying a theme.
   useEffect(() => {
-    const saved = localStorage.getItem("theme") as Theme;
-    if (saved) setTheme(saved);
+    try {
+      const savedTheme = localStorage.getItem("theme");
+
+      if (isTheme(savedTheme)) {
+        setTheme(savedTheme);
+      }
+    } catch {
+      // Keep the default theme if browser storage is unavailable.
+    } finally {
+      setHasLoadedPreference(true);
+    }
   }, []);
 
-  // 🔥 Apply + persist
-useEffect(() => {
+  // Apply the selected theme and persist subsequent changes.
+  useEffect(() => {
+    if (!hasLoadedPreference) return;
 
-  document.documentElement.classList.remove(
-    "light",
-    "dark",
-    "mint",
-    "neon"
-  );
+    const root = document.documentElement;
 
-  document.documentElement.classList.add(theme);
+    root.classList.remove(...THEMES);
+    root.classList.add(theme);
+    root.dataset.theme = theme;
 
-  document.documentElement.setAttribute(
-    "data-theme",
-    theme
-  );
-
-  localStorage.setItem(
-    "theme",
-    theme
-  );
-
-}, [theme]);
+    try {
+      localStorage.setItem("theme", theme);
+    } catch {
+      // The theme still works for this session without persistent storage.
+    }
+  }, [theme, hasLoadedPreference]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>

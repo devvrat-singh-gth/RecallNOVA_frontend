@@ -280,3 +280,177 @@ scrollbar-width: none;
     transform: translateY(0);
   }
 }
+
+/* =========================================================
+   RECALLNOVA — RESPONSIVE UI FOUNDATION
+   Additive layer: preserves existing component class names.
+   ========================================================= */
+
+:root {
+  color-scheme: light;
+
+  --page-width: 80rem;
+  --page-gutter: clamp(1rem, 3.5vw, 2.5rem);
+  --section-space: clamp(3.5rem, 7vw, 6.5rem);
+  --surface-radius: clamp(1rem, 2vw, 1.75rem);
+
+  --focus-ring: color-mix(in srgb, var(--primary) 70%, transparent);
+  --motion-fast: 160ms;
+  --motion-normal: 240ms;
+  --motion-slow: 360ms;
+}
+
+.dark,
+.mint,
+.neon {
+  color-scheme: dark;
+}
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+  background: var(--bg);
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent long content from expanding grid and flex layouts. */
+main,
+section,
+article,
+aside,
+header,
+footer,
+nav {
+  min-width: 0;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+[role="button"],
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* Reusable fluid layout primitives. */
+.rn-container {
+  width: min(100% - (2 * var(--page-gutter)), var(--page-width));
+  margin-inline: auto;
+}
+
+.rn-section {
+  padding-block: var(--section-space);
+}
+
+.rn-section-heading {
+  max-width: 48rem;
+  margin-inline: auto;
+  text-wrap: balance;
+  font-size: clamp(1.75rem, 3.6vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+.rn-body-copy {
+  max-width: 46rem;
+  font-size: clamp(0.9375rem, 1.2vw, 1.0625rem);
+  line-height: 1.8;
+  text-wrap: pretty;
+}
+
+.rn-card-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: clamp(0.875rem, 2vw, 1.25rem);
+}
+
+@media (min-width: 40rem) {
+  .rn-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .rn-card-grid.rn-card-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .rn-card-grid.rn-card-grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Use on non-interactive surfaces; interactive elements retain their own focus. */
+.rn-surface {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--surface-radius);
+  background: var(--card);
+  transition:
+    border-color var(--motion-normal) ease,
+    background-color var(--motion-normal) ease,
+    box-shadow var(--motion-normal) ease;
+}
+
+.rn-interactive-surface:hover {
+  border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rn-hover-lift {
+    transition: transform var(--motion-normal) ease;
+  }
+
+  .rn-hover-lift:hover {
+    transform: translateY(-3px);
+  }
+}
+
+/* Consistent section anchors and reduced-motion support. */
+section[id] {
+  scroll-margin-top: 5.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
