@@ -8,7 +8,7 @@ import { useAuth } from "./auth/AuthProvider";
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
-  access: "registered" | "guest";
+  access: "registered" | "guest" | "both";
 };
 
 export default function ProtectedRoute({
@@ -25,9 +25,11 @@ export default function ProtectedRoute({
   } = useAuth();
 
   const allowed =
-    access === "guest"
-      ? isAuthenticated && isGuest
-      : isAuthenticated && isRegisteredUser;
+    access === "both"
+      ? isAuthenticated && (isGuest || isRegisteredUser)
+      : access === "guest"
+        ? isAuthenticated && isGuest
+        : isAuthenticated && isRegisteredUser;
 
   useEffect(() => {
     if (loading) return;
