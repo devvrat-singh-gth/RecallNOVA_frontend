@@ -74,6 +74,41 @@ export default function ThemeProvider({
     }
   }, [theme, hasLoadedPreference]);
 
+  // Globally show scrollbars while scrolling, then hide after inactivity.
+  useEffect(() => {
+    const root = document.documentElement;
+
+    let hideTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const handleScroll = () => {
+      root.classList.add("scrollbars-visible");
+
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+      }
+
+      hideTimer = setTimeout(() => {
+        root.classList.remove("scrollbars-visible");
+      }, 1300);
+    };
+
+    // Capture scroll events from nested containers and the main page.
+    document.addEventListener("scroll", handleScroll, {
+      capture: true,
+      passive: true,
+    });
+
+    return () => {
+      document.removeEventListener("scroll", handleScroll, true);
+
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+      }
+
+      root.classList.remove("scrollbars-visible");
+    };
+  }, []);
+
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}

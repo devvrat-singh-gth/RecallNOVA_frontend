@@ -1,3 +1,4 @@
+import ProtectedRoute from "@/components/ProtectedRoute";
 import GuestSidebar from "@/components/guest/GuestSidebar";
 
 export default function GuestLayout({
@@ -5,7 +6,9 @@ export default function GuestLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
+ 
+return (
+  <ProtectedRoute access="guest">
     <div
       className="
         flex
@@ -15,21 +18,22 @@ export default function GuestLayout({
       "
     >
       <GuestSidebar />
-<main
-  className="
-    flex-1
-    overflow-y-auto
-    overflow-x-hidden
-    custom-scrollbar
 
-    pt-16
-    md:pt-0
-
-    md:ml-60
-  "
->
-  {children}
-</main>
+      <main
+        className="
+          flex-1
+          overflow-y-auto
+          overflow-x-hidden
+          custom-scrollbar
+          pt-16
+          md:pt-0
+          md:ml-60
+        "
+      >
+        {children}
+      </main>
     </div>
-  );
+  </ProtectedRoute>
+);
+
 }

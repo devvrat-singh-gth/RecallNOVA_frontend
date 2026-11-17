@@ -1,44 +1,88 @@
 @import "tailwindcss";
 
-/* 🎯 THEME VARIABLES */
-:root {
-  --bg: #ffffff;
-  --text: #111111;
-  --card: #f5f5f5;
-  --border: #e5e5e5;
-  --primary: #111111;
 
-  --chart-color: #111111;
+/* =========================================================
+   RECALLNOVA — THEME VARIABLES
+   ========================================================= */
+
+:root,
+.light {
+  color-scheme: light;
+
+  /* Soft warm-white background */
+  --bg: #f4f3ee;
+  --text: #202630;
+
+  /* Warm sidebar and card surfaces */
+  --card: #f5f2e9;
+  --border: #e3dfd4;
+
+  /* Blacker buttons */
+  --primary: #202020;
+
+  --chart-color: #526b82;
+
+  --ambient-glow: rgba(100, 160, 205, 0.10);
+  --ambient-secondary: rgba(145, 165, 180, 0.055);
+  --ambient-wash: rgba(205, 190, 150, 0.025);
 }
 
+
+/* DARK — UNCHANGED */
 .dark {
-  --bg: #0f0f0f;
-  --text: #ffffff;
-  --card: #1a1a1a;
-  --border: #2a2a2a;
+  color-scheme: dark;
+
+  --bg: #101312;
+  --text: #e9eee9;
+  --card: #191e1b;
+  --border: #2a342e;
   --primary: #a3e635;
 
   --chart-color: #a3e635;
+
+  --ambient-glow: rgba(34, 197, 94, 0.14);
+  --ambient-secondary: rgba(74, 222, 128, 0.065);
+  --ambient-wash: rgba(16, 185, 129, 0.04);
 }
 
+
+/* MINT — RESTORED MINT-GREEN SURFACES */
 .mint {
+  color-scheme: light;
+
   --bg: #e6fff9;
   --text: #00332d;
   --card: #ccfff2;
   --border: #99f6e4;
-  --primary: #00b894;
+  --primary: #009b7b;
 
-  --chart-color: #00b894;
+  --chart-color: #009b7b;
+
+  --ambient-glow: rgba(0, 184, 148, 0.11);
+  --ambient-secondary: rgba(45, 180, 160, 0.06);
+  --ambient-wash: rgba(0, 184, 148, 0.035);
 }
 
-.neon {
-  --bg: #000;
-  --text: #39ff14;
-  --card: #050505;
-  --border: #39ff14;
-  --primary: #39ff14;
 
-  --chart-color: #39ff14;
+/* NEON — MATRIX BLACK WITH SOFTER GREEN */
+.neon {
+  color-scheme: dark;
+
+  --bg: #020402;
+  --text: #b8d9ad;
+  --card: #080d08;
+  --border: #254025;
+  --primary: #39e62a;
+
+  --chart-color: #39e62a;
+
+  --ambient-glow: rgba(57, 230, 42, 0.045);
+  --ambient-secondary: rgba(57, 230, 42, 0.018);
+  --ambient-wash: rgba(57, 230, 42, 0.008);
+
+  --scroll-thumb: rgba(100, 190, 75, 0.38);
+  --scroll-thumb-hover: rgba(130, 215, 95, 0.65);
+  --scroll-track: rgba(57, 230, 42, 0.025);
 }
 
 /* BASE */
@@ -90,42 +134,101 @@ body {
 .dark .glass {
   background: rgba(255, 255, 255, 0.05);
 }
-/* 🔥 THEME SCROLLBAR VARIABLES */
 
-:root {
-  --scroll-thumb: rgba(120,120,120,0.45);
-  --scroll-thumb-hover: rgba(80,80,80,0.7);
-  --scroll-track: rgba(0,0,0,0.04);
+/* =========================================================
+   RECALLNOVA — GLOBAL AUTO-HIDING THEME SCROLLBAR
+   Thin thumb only; transparent track; no arrows.
+   ========================================================= */
+
+/* LIGHT — neutral charcoal */
+:root,
+.light {
+  --scroll-thumb: rgba(65, 75, 85, 0.48);
+  --scroll-thumb-hover: rgba(45, 55, 65, 0.72);
 }
 
-/* 🌙 DARK */
+/* DARK — lime */
 .dark {
-  --scroll-thumb: rgba(163,230,53,0.45);
-  --scroll-thumb-hover: rgba(163,230,53,0.8);
-  --scroll-track: rgba(255,255,255,0.04);
+  --scroll-thumb: rgba(163, 230, 53, 0.48);
+  --scroll-thumb-hover: rgba(163, 230, 53, 0.82);
 }
 
-/* 🌿 MINT */
+/* MINT — emerald */
 .mint {
-  --scroll-thumb: rgba(16,185,129,0.45);
-  --scroll-thumb-hover: rgba(16,185,129,0.75);
-  --scroll-track: rgba(0,0,0,0.03);
+  --scroll-thumb: rgba(0, 155, 123, 0.48);
+  --scroll-thumb-hover: rgba(0, 130, 105, 0.78);
 }
 
-/* ⚡ NEON */
+/* NEON — muted green */
 .neon {
-  --scroll-thumb: rgba(57,255,20,0.55);
-  --scroll-thumb-hover: rgba(57,255,20,0.95);
-  --scroll-track: rgba(57,255,20,0.05);
+  --scroll-thumb: rgba(100, 190, 75, 0.42);
+  --scroll-thumb-hover: rgba(130, 215, 95, 0.72);
 }
 
-.hide-scrollbar{
-scrollbar-width: none;
+/* Firefox and other standard scrollbar implementations */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
 
-.hide-scrollbar::-webkit-scrollbar{
-    width:0;
+/* Show the scrollbar thumb while scrolling */
+html.scrollbars-visible * {
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
+
+/* Chromium, Chrome, Edge and Safari */
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  transition: background-color 180ms ease;
+}
+
+/* Active scrollbar */
+html.scrollbars-visible *::-webkit-scrollbar-thumb {
+  background-color: var(--scroll-thumb);
+}
+
+/* Slightly stronger thumb when hovering over it */
+html.scrollbars-visible *::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scroll-thumb-hover);
+}
+
+/* Remove scrollbar arrows/buttons completely */
+*::-webkit-scrollbar-button,
+*::-webkit-scrollbar-button:single-button,
+*::-webkit-scrollbar-corner {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+/* Preserve elements where scrollbars are intentionally hidden */
+.hide-scrollbar {
+  scrollbar-width: none !important;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* 🔥 MODERN SCROLLBAR */
 
 
@@ -154,10 +257,12 @@ scrollbar-width: none;
 .custom-scrollbar.show-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(180,255,60,.75);
 }
+
 .neon .chat-composer {
-  background: rgba(57,255,20,.03);
-  border-color: rgba(57,255,20,.15);
+  background: rgba(57, 230, 42, 0.025);
+  border-color: rgba(100, 190, 75, 0.12);
 }
+
 .composer-glass {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -206,18 +311,16 @@ scrollbar-width: none;
 
 }
 
+
 .neon .glass-card {
+  background: rgba(25, 55, 25, 0.10);
+  border-color: rgba(100, 190, 75, 0.16);
 
-  background: rgba(57,255,20,.04);
-
-  border-color: rgba(57,255,20,.2);
-
-}
-.neon .glass-card {
   box-shadow:
-    0 0 10px rgba(57,255,20,.2),
-    0 0 30px rgba(57,255,20,.08);
+    0 0 10px rgba(57, 230, 42, 0.07),
+    0 0 25px rgba(57, 230, 42, 0.025);
 }
+
 
 .mint .glass-card {
   box-shadow:
@@ -453,4 +556,68 @@ section[id] {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+
+/* =========================================================
+   RECALLNOVA — THEME-AWARE AMBIENT BACKGROUND
+   Soft top glow that fades naturally into the page background.
+   ========================================================= */
+
+/* LIGHT */
+:root,
+.light {
+  --ambient-glow: rgba(56, 189, 248, 0.14);
+  --ambient-secondary: rgba(14, 165, 233, 0.07);
+  --ambient-wash: rgba(125, 211, 252, 0.055);
+}
+
+/* DARK — Emerald glow */
+.dark {
+  --ambient-glow: rgba(34, 197, 94, 0.17);
+  --ambient-secondary: rgba(74, 222, 128, 0.075);
+  --ambient-wash: rgba(16, 185, 129, 0.055);
+}
+
+/* MINT — Soft turquoise glow */
+.mint {
+  --ambient-glow: rgba(0, 184, 148, 0.15);
+  --ambient-secondary: rgba(45, 212, 191, 0.085);
+  --ambient-wash: rgba(0, 184, 148, 0.055);
+}
+
+/* NEON — Controlled lime + cyan glow */
+.neon {
+  --ambient-glow: rgba(57, 255, 20, 0.16);
+  --ambient-secondary: rgba(34, 211, 238, 0.085);
+  --ambient-wash: rgba(57, 255, 20, 0.045);
+}
+
+/* GLOBAL PAGE BACKGROUND */
+html {
+  background-color: var(--bg);
+}
+
+body {
+  background-color: var(--bg);
+
+  background-image:
+    radial-gradient(
+      ellipse 55% 36% at 92% 0%,
+      var(--ambient-secondary) 0%,
+      transparent 75%
+    ),
+    radial-gradient(
+      ellipse 90% 48% at 50% 0%,
+      var(--ambient-glow) 0%,
+      transparent 72%
+    ),
+    linear-gradient(
+      180deg,
+      var(--ambient-wash) 0%,
+      transparent 58%
+    );
+
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }

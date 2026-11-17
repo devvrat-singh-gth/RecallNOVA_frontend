@@ -118,7 +118,7 @@ if (!submitted[questionIndex] || !autoAdvance) return;
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!answers[questionIndex]) return;
 
     const correct = getCorrectAnswer(q);
@@ -145,14 +145,13 @@ setAutoAdvance(true);
       JSON.stringify(payload)
     );
 
-    saveQuizProgress({
-      user_id: "user1",
-      doc_id: docId,
-      current,
-      answers,
-      submitted: updatedSubmitted,
-      finished: false,
-    });
+await saveQuizProgress({
+  doc_id: docId,
+  current,
+  answers,
+  submitted: updatedSubmitted,
+  finished: false,
+});
   };
 
 const handleNext = () => {
@@ -195,15 +194,16 @@ const handlePrev = () => {
   const finishQuiz = async () => {
     const score = calculateScore();
 
-    await saveQuizProgress({
-      user_id: "user1",
-      doc_id: docId,
-      current,
-      answers,
-      submitted,
-      finished: true,
-      score,
-    });
+await saveQuizProgress({
+  doc_id: docId,
+  current,
+  answers,
+  submitted,
+  finished: true,
+  score: quiz.length
+    ? Math.round((score / quiz.length) * 100)
+    : 0,
+});
 
     localStorage.setItem(
       `quiz_result_${docId}`,

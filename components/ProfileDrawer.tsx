@@ -6,6 +6,8 @@ import {
   useRef,
 } from "react";
 
+import { createPortal } from "react-dom";
+
 import {
   Settings,
   LayoutDashboard,
@@ -30,8 +32,17 @@ export default function ProfileDrawer({
 
 const [imageFailed, setImageFailed] =
   useState(false);
-  const drawerRef =
-    useRef<HTMLDivElement | null>(null);
+  const drawerRef = useRef<HTMLDivElement | null>(null);
+const portalRef = useRef<HTMLDivElement | null>(null);
+
+const [portalReady, setPortalReady] = useState(false);
+
+const [desktopPosition, setDesktopPosition] = useState<{
+  left?: number;
+  right?: number;
+  top?: number;
+  bottom?: number;
+}>({});
 
   const router = useRouter();
 
@@ -73,14 +84,14 @@ useEffect(() => {
     const handleOutsideClick = (
       event: MouseEvent
     ) => {
-      if (
-        drawerRef.current &&
-        !drawerRef.current.contains(
-          event.target as Node
-        )
-      ) {
-        setOpen(false);
-      }
+     const target = event.target as Node;
+
+if (
+  !drawerRef.current?.contains(target) &&
+  !portalRef.current?.contains(target)
+) {
+  setOpen(false);
+}
     };
 
     document.addEventListener(
@@ -94,7 +105,41 @@ useEffect(() => {
         handleOutsideClick
       );
   }, []);
+useEffect(() => {
+  setPortalReady(true);
+}, []);
 
+useEffect(() => {
+  if (!open || !portalReady) return;
+
+  const updatePosition = () => {
+    const rect = drawerRef.current?.getBoundingClientRect();
+
+    if (!rect) return;
+
+    if (placement === "sidebar") {
+      setDesktopPosition({
+        left: rect.right + 12,
+        bottom: window.innerHeight - rect.bottom,
+      });
+    } else {
+      setDesktopPosition({
+        right: window.innerWidth - rect.right,
+        top: rect.bottom + 8,
+      });
+    }
+  };
+
+  updatePosition();
+
+  window.addEventListener("resize", updatePosition);
+  window.addEventListener("scroll", updatePosition, true);
+
+  return () => {
+    window.removeEventListener("resize", updatePosition);
+    window.removeEventListener("scroll", updatePosition, true);
+  };
+}, [open, portalReady, placement]);
   const handleLogout = async () => {
     setOpen(false);
 
@@ -106,14 +151,14 @@ useEffect(() => {
 
   return (
     <div
-      ref={drawerRef}
-      className="relative"
-    >
+  ref={drawerRef}
+  className="relative z-[1000]"
+>
       <button
-        type="button"
-        onClick={() =>
-          setOpen(!open)
-        }
+  type="button"
+  aria-expanded={open}
+  aria-label={`Open profile menu for ${displayName}`}
+  onClick={() => setOpen((prev) => !prev)}
         className="
           w-full
           flex
@@ -226,37 +271,36 @@ useEffect(() => {
       {open && (
         <>
 {/* DESKTOP DRAWER */}
-
-<div
-  className={`
-    hidden
-    md:block
-    absolute
-
-    w-60
-    rounded-2xl
-    border
-    bg-[var(--card)]
-    backdrop-blur-xl
-    shadow-2xl
-    overflow-hidden
-    z-[999]
-
-    ${
-      placement === "header"
-        ? `
-          right-0
-          top-full
-          mt-2
-        `
-        : `
-          left-full
-          bottom-0
-          ml-10
-        `
-    }
-  `}
->
+{portalReady &&
+  createPortal(
+    <div
+      ref={portalRef}
+      className="
+        hidden
+        md:block
+        fixed
+        w-60
+        rounded-2xl
+        border
+        bg-[var(--card)]
+        backdrop-blur-xl
+        shadow-2xl
+        overflow-hidden
+        z-[10000]
+      "
+      style={{
+        position: "fixed",
+        ...(placement === "header"
+          ? {
+              right: desktopPosition.right,
+              top: desktopPosition.top,
+            }
+          : {
+              left: desktopPosition.left,
+              bottom: desktopPosition.bottom,
+            }),
+      }}
+    >
             <div className="p-4">
               <div className="flex items-center gap-3">
 {user?.picture && !imageFailed ? (
@@ -394,8 +438,9 @@ useEffect(() => {
               <LogOut size={18} />
               Logout
             </button>
-          </div>
-
+    </div>,
+    document.body
+  )}
           {/* MOBILE DRAWER */}
 
           <div

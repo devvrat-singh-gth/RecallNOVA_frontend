@@ -62,7 +62,7 @@ console.log(
       data.access_token
     );
 
-    router.replace("/guest");
+    router.push("/guest");
   } catch (error) {
     setGuestError(
       error instanceof Error

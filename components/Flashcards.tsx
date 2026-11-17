@@ -66,38 +66,52 @@ useEffect(() => {
   setIndex(0);
   setFlipped(false);
 }, [page]);
-
 const loadDocs = async () => {
   try {
     setDocsLoading(true);
 
     const res = await getDocuments();
-    const list = res.documents || [];
+    const list = Array.isArray(res?.documents)
+      ? res.documents
+      : [];
 
     setDocs(list);
 
-    // 🔥 CHECK EXISTENCE
-    const map: any = {};
+    // Keep successfully loaded documents even if
+    // an individual flashcard status check fails.
+    const map: Record<
+      string,
+      { exists: boolean; count: number }
+    > = {};
 
-    for (const d of list) {
-      const r = await checkFlashcards(d._id);
+    await Promise.all(
+      list.map(async (doc: any) => {
+        try {
+          const result = await checkFlashcards(doc._id);
 
-      console.log(
-        "FLASHCARD CHECK:",
-        r
-      );
+          map[doc._id] = {
+            exists: Boolean(result?.exists),
+            count: Number(result?.count) || 0,
+          };
+        } catch (error) {
+          console.error(
+            `FLASHCARD CHECK FAILED FOR ${doc._id}:`,
+            error
+          );
 
-      map[d._id] = {
-        exists: r.exists,
-        count: r.count || 0,
-      };
-    }
+          map[doc._id] = {
+            exists: false,
+            count: 0,
+          };
+        }
+      })
+    );
 
     setExistsMap(map);
-  } catch (err) {
+  } catch (error) {
     console.error(
-      "FLASHCARD DOCUMENT LOAD FAILED:",
-      err
+      "DOCUMENT LIST LOAD FAILED:",
+      error
     );
 
     setDocs([]);

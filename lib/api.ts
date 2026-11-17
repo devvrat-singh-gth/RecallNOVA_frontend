@@ -122,29 +122,27 @@ export async function sendMessage(
       }),
     }
   );
-const data = await res.json();
+  const data = await res.json().catch(() => null);
 
-if (!res.ok) {
+  if (!res.ok) {
+    const detail =
+      typeof data?.detail === "string"
+        ? data.detail
+        : typeof data?.detail?.message === "string"
+          ? data.detail.message
+          : typeof data?.error === "string"
+            ? data.error
+            : typeof data?.message === "string"
+              ? data.message
+              : `Chat request failed (${res.status}).`;
 
-  console.error(
-    "UPLOAD ERROR RESPONSE:",
-    data
-  );
+    console.error("CHAT REQUEST FAILED:", {
+      status: res.status,
+      response: data,
+    });
 
-  throw new Error(
-
-    typeof data?.detail === "string"
-      ? data.detail
-
-      : typeof data?.error === "string"
-      ? data.error
-
-      : typeof data?.message === "string"
-      ? data.message
-
-      : JSON.stringify(data)
-  );
-}
+    throw new Error(detail);
+  }
 
   return data;
 }
@@ -492,6 +490,7 @@ export async function getQuiz({
   return data;
 }
 
+
 export async function checkFlashcards(
   doc_id: string
 ) {
@@ -499,7 +498,20 @@ export async function checkFlashcards(
     `/learning/flashcards/check?doc_id=${encodeURIComponent(doc_id)}`
   );
 
-  return res.json();
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    const detail =
+      typeof data?.detail === "string"
+        ? data.detail
+        : data?.detail?.message;
+
+    throw new Error(
+      detail || "Unable to check flashcards."
+    );
+  }
+
+  return data;
 }
 
 export async function checkQuiz(
@@ -509,8 +521,22 @@ export async function checkQuiz(
     `/learning/quiz/check?doc_id=${encodeURIComponent(doc_id)}`
   );
 
-  return res.json();
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    const detail =
+      typeof data?.detail === "string"
+        ? data.detail
+        : data?.detail?.message;
+
+    throw new Error(
+      detail || "Unable to check quiz."
+    );
+  }
+
+  return data;
 }
+
 
 export async function saveQuizProgress(
   data: unknown

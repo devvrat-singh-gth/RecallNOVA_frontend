@@ -17,7 +17,10 @@ import {
   FileText,
   Check,
   ChevronDown,
-  ArrowUp
+  ArrowUp,
+  X,
+  PanelLeftOpen,
+  PanelLeftClose,
 } from "lucide-react";
 import MessageBubble from "./MessageBubble";
 import {
@@ -26,11 +29,7 @@ import {
 } from "@/components/ui/StaggerContainer";
 import { useTheme } from "@/components/ThemeProvider";
 import { Range, getTrackBackground } from "react-range";
-import {
-  Trash2,
-  ChevronLeft,
-  ChevronRight
-} from "lucide-react";
+import { Trash2 } from "lucide-react";
 import {
   useRouter,
   useParams,
@@ -55,8 +54,6 @@ export default function ChatBox() {
       : "/chat";
 const [showDocs,setShowDocs] =
   useState(false);
-const [showLoader, setShowLoader] = useState(false);
-
   const { theme } = useTheme();
 
 const [messages, setMessages] =
@@ -67,7 +64,7 @@ const [messages, setMessages] =
 
   const [docs, setDocs] =
     useState<any[]>([]);
-
+const [docsLoaded, setDocsLoaded] = useState(false);
   const [sessions, setSessions] =
     useState<any[]>([]);
 
@@ -148,6 +145,41 @@ const popupRef =
 useRef<HTMLDivElement | null>(null);
 const [mobileHistoryOpen, setMobileHistoryOpen] =
   useState(false);
+  const [desktopHistoryOpen, setDesktopHistoryOpen] =
+  useState(false);
+  // Sidebar <-> ChatBox history drawer connection
+
+useEffect(() => {
+  const handleToggleHistory = () => {
+    if (window.matchMedia("(min-width: 768px)").matches) {
+      setDesktopHistoryOpen((prev) => !prev);
+    } else {
+      setMobileHistoryOpen((prev) => !prev);
+    }
+  };
+
+  window.addEventListener(
+    "recallnova:toggle-chat-history",
+    handleToggleHistory
+  );
+
+  return () => {
+    window.removeEventListener(
+      "recallnova:toggle-chat-history",
+      handleToggleHistory
+    );
+  };
+}, []);
+
+useEffect(() => {
+  window.dispatchEvent(
+    new CustomEvent("recallnova:chat-history-state", {
+      detail: {
+        open: desktopHistoryOpen,
+      },
+    })
+  );
+}, [desktopHistoryOpen]);
   const [deleteModalOpen, setDeleteModalOpen] =
   useState(false);
 
@@ -187,35 +219,34 @@ useEffect(() => {
     );
 
 }, []);
-  // 🔥 THEME COLORS
+   // Theme variables are supplied by ThemeProvider.
+  // All four themes use the same component styling,
+  // while their CSS variables provide the actual colors.
 
   const themeStyles = {
     light: {
-      bg: "bg-gray-100 text-black",
-      sidebar: "bg-white border-gray-200",
-      card: "bg-white border-gray-200",
-      input: "bg-white border-gray-300",
+      bg: "bg-[var(--bg)] text-[var(--text)]",
+      sidebar: "bg-[var(--card)] border-[var(--border)]",
+      card: "bg-[var(--card)] border-[var(--border)]",
+      input: "bg-[var(--card)] border-[var(--border)]",
     },
-
     dark: {
-      bg: "bg-[#06111f] text-white",
-      sidebar: "bg-black/30 border-lime-400/10",
-      card: "bg-white/10 border-white/10",
-      input: "bg-black/40 border-lime-400/20",
+      bg: "bg-[var(--bg)] text-[var(--text)]",
+      sidebar: "bg-[var(--card)] border-[var(--border)]",
+      card: "bg-[var(--card)] border-[var(--border)]",
+      input: "bg-[var(--card)] border-[var(--border)]",
     },
-
     mint: {
-      bg: "bg-emerald-50 text-black",
-      sidebar: "bg-white border-emerald-200",
-      card: "bg-white border-emerald-200",
-      input: "bg-white border-emerald-300",
+      bg: "bg-[var(--bg)] text-[var(--text)]",
+      sidebar: "bg-[var(--card)] border-[var(--border)]",
+      card: "bg-[var(--card)] border-[var(--border)]",
+      input: "bg-[var(--card)] border-[var(--border)]",
     },
-
     neon: {
-      bg: "bg-black text-lime-300",
-      sidebar: "bg-black border-lime-400/20",
-      card: "bg-lime-400/10 border-lime-400/20",
-      input: "bg-black border-lime-400/30",
+      bg: "bg-[var(--bg)] text-[var(--text)]",
+      sidebar: "bg-[var(--card)] border-[var(--border)]",
+      card: "bg-[var(--card)] border-[var(--border)]",
+      input: "bg-[var(--card)] border-[var(--border)]",
     },
   };
 const sliderMax =
@@ -227,35 +258,41 @@ const sliderMax =
       theme as keyof typeof themeStyles
     ];
 const lastLoadedRef = useRef("");
+const chatLoadRequestRef = useRef(0);
+
 useEffect(() => {
-  const urlChatId = params?.chatId as string;
+  const urlChatId = params?.chatId as string | undefined;
 
-  if (!urlChatId) return;
-  if (docs.length === 0) return;
-
-  if (lastLoadedRef.current === urlChatId)
+  if (!urlChatId) {
+    lastLoadedRef.current = "";
+    chatLoadRequestRef.current += 1;
+    setChatLoading(false);
     return;
+  }
 
-  lastLoadedRef.current = urlChatId;
+  if (!docsLoaded) return;
 
-  loadChat(urlChatId);
+  if (lastLoadedRef.current === urlChatId) return;
 
-}, [
-  params?.chatId,
-  docs.length
-]);
-const loadingChatRef = useRef(false);
+  void loadChat(urlChatId);
+}, [params?.chatId, docsLoaded, docs]);
   // 🔥 LOAD DATA
 
-  useEffect(() => {
+ useEffect(() => {
+  void loadSessions();
 
-    loadSessions();
-
-    getDocuments().then((res) => {
+  getDocuments()
+    .then((res) => {
       setDocs(res.documents || []);
+    })
+    .catch((error) => {
+      console.error("Failed to load documents:", error);
+      setDocs([]);
+    })
+    .finally(() => {
+      setDocsLoaded(true);
     });
-
-  }, []);
+}, []);
 useEffect(() => {
 
 }, [
@@ -296,134 +333,117 @@ useEffect(() => {
 
   // 🔥 LOAD SESSIONS
 
-  const loadSessions = async () => {
+const loadSessions = async () => {
+  try {
+    const res = await getChatSessions();
 
-    const res =
-      await getChatSessions();
+    const updatedSessions = res.sessions || [];
 
-    setSessions(res.sessions || []);
-  };
+    setSessions(updatedSessions);
+
+    window.dispatchEvent(
+      new CustomEvent("recallnova:chat-sessions-updated", {
+        detail: {
+          count: updatedSessions.length,
+        },
+      })
+    );
+
+    return updatedSessions;
+  } catch (error) {
+    console.error("Failed to load chat sessions:", error);
+
+    return [];
+  }
+};
 
   // 🔥 LOAD CHAT
 const loadChat = async (
   selectedChatId: string
 ) => {
-    if (
-    loadingChatRef.current
-  ) return;
+  if (!selectedChatId) return;
 
-  loadingChatRef.current = true;
-if (!selectedChatId) return;
-setMessages([]);
-setChatLoading(true);
-setShowLoader(true);
+  // Each new request invalidates any older request.
+  const requestId = ++chatLoadRequestRef.current;
 
-const startTime = Date.now();
+  setMessages([]);
+  setChatId(selectedChatId);
+  setChatLoading(true);
+
+  // Reset the previous conversation's PDF selection.
+  setSelectedDoc("");
+  setStartPage(1);
+  setEndPage(1);
+  setTotalPages(1);
+
   try {
+    const res = await getChat(selectedChatId);
 
-    const res =
-      await getChat(selectedChatId);
+    // Ignore stale responses from previous chat requests.
+    if (requestId !== chatLoadRequestRef.current) return;
 
-    if (res.messages) {
+    const chatMessages = Array.isArray(res.messages)
+      ? res.messages
+      : [];
 
-      const formatted =
-        res.messages.flatMap((m: any) => [
-          {
-            role: "user",
-            text: m.question,
-          },
-          {
-            role: "bot",
-            text: m.response,
-          },
-        ]);
+    const formatted = chatMessages.flatMap((m: any) => [
+      {
+        role: "user",
+        text: m.question,
+      },
+      {
+        role: "bot",
+        text: m.response,
+      },
+    ]);
 
-      setMessages(formatted);
+    setMessages(formatted);
 
-      setChatId(selectedChatId);
-      const draft = localStorage.getItem(
-    `draft-${selectedChatId}`
-);
+    setChatId(selectedChatId);
 
-setInput(draft ?? "");
-if (res.selected_doc) {
+    const draft = localStorage.getItem(
+      `draft-${selectedChatId}`
+    );
 
-  console.log(
-    "FOUND DOC ID",
-    res.selected_doc
-  );
+    setInput(draft ?? "");
 
-const doc = docs.find(
-  d =>
-    d._id === res.selected_doc ||
-    d.id === res.selected_doc
-);
+    if (res.selected_doc) {
+      const doc = docs.find(
+        (d) =>
+          d._id === res.selected_doc ||
+          d.id === res.selected_doc
+      );
 
-  console.log(
-    "MATCHED DOC",
-    doc
-  );
-  console.log(
-  "DOCS COUNT",
-  docs.length
-);
-if (doc) {
+      if (doc) {
+        const pageCount = doc.total_pages || 1;
 
-  setSelectedDoc(
-    String(res.selected_doc)
-  );
-
-  setTotalPages(
-    doc.total_pages || 1
-  );
-
-  setStartPage(
-    res.start_page || 1
-  );
-
-  setEndPage(
-    res.end_page ||
-    doc.total_pages ||
-    1
-  );
-    console.log(
-  "SETTING UI STATE",
-  {
-    selected_doc: res.selected_doc,
-    start_page: res.start_page,
-    end_page: res.end_page
-  }
-);
-console.log(
-  "TYPE OF DOC ID:",
-  typeof res.selected_doc
-);
-
-console.log(
-  "DOC VALUE:",
-  JSON.stringify(res.selected_doc)
-);
-  }
-}
+        setSelectedDoc(String(res.selected_doc));
+        setTotalPages(pageCount);
+        setStartPage(res.start_page || 1);
+        setEndPage(res.end_page || pageCount);
+      }
     }
 
+    // Only mark the chat as loaded after successful retrieval.
+    lastLoadedRef.current = selectedChatId;
+
+  } catch (error) {
+    if (requestId === chatLoadRequestRef.current) {
+      console.error("Failed to load chat:", error);
+
+      setMessages([
+        {
+          role: "bot",
+          text: "Unable to load this conversation. Please try again.",
+        },
+      ]);
+    }
   } finally {
-
-  const elapsed = Date.now() - startTime;
-
-  const remaining = Math.max(
-    2000 - elapsed,
-    0
-  );
-setTimeout(() => {
-
-  setChatLoading(false);
-  setShowLoader(false);
-
-  loadingChatRef.current = false;
-
-}, remaining);
-}
+    // Only the latest request can stop the loader.
+    if (requestId === chatLoadRequestRef.current) {
+      setChatLoading(false);
+    }
+  }
 };
 
   // 🔥 DELETE CHAT
@@ -543,156 +563,195 @@ router.push(
 };
 
 const newChat = () => {
+  // Invalidate any currently running chat-load request.
+  chatLoadRequestRef.current += 1;
 
   lastLoadedRef.current = "";
 
+  setChatLoading(false);
   setMessages([]);
-
   setChatId("");
+  setInput("");
 
   setSelectedDoc("");
-
   setStartPage(1);
-
   setEndPage(1);
-
   setTotalPages(1);
 
-router.push(chatBasePath);
+  router.push(chatBasePath);
 };
   return (
 
-    <div className={`
-      h-full
-      flex
-      overflow-hidden
-      ${styles.bg}
-    `}>
-
-{/* DESKTOP SIDEBAR */}
+    <div
+      className={`
+  relative
+  flex h-full min-h-0 min-w-0
+  overflow-hidden
+  ${styles.bg}
+`}
+    >{/* DESKTOP CHAT HISTORY DRAWER */}
 
 <div
   className={`
-    hidden
-    md:flex
-    w-60
-    border-r
+    absolute inset-y-0 left-0 z-[100]
+    hidden md:flex
+    w-[clamp(15rem,22vw,18rem)]
     flex-col
-    p-5
+    border-r p-4
+    shadow-2xl
+    transition-transform duration-300 ease-in-out
     ${styles.sidebar}
-  `}
->
-
-  <button
-    onClick={newChat}
-    className="
-      bg-lime-400
-      text-black
-      font-semibold
-      rounded-xl
-      py-3
-      hover:scale-[1.02]
-      transition-colors duration-200
-    "
-  >
-    + New Chat
-  </button>
-
-  <div
-    className="
-      mt-6
-      flex-1
-      overflow-y-auto
-      custom-scrollbar
-      space-y-2
-      pr-2
-    "
-  >
-
-          {sessions.map((s) => (
-
-  <div
-  key={s.chat_id}
-
-onClick={() => {
-
-  if (
-    s.chat_id === chatId ||
-    chatLoading
-  ) return;
-
-router.push(
-    `${chatBasePath}/${s.chat_id}`
-  );
-}}
-
-  className={`
-    group
-    w-full
-    flex
-    items-center
-    justify-between
-    text-left
-    p-3
-    rounded-xl
-    border
-    cursor-pointer
-
-    transition-colors
-    duration-200
-
     ${
-      chatId === s.chat_id
-        ? `
-        bg-lime-400
-        text-black
-        border-lime-400
-      `
-        : `
-        ${styles.card}
-        hover:bg-white/5
-      `
+      desktopHistoryOpen
+        ? "translate-x-0"
+        : "-translate-x-full"
     }
   `}
+  style={{ borderColor: "var(--border)" }}
 >
-
-    <div className="
-      text-sm
-      font-semibold
-      truncate
-      flex-1
-    ">
-      {s.title}
+  <div className="mb-5 flex items-center justify-between">
+    <div>
+      <h3 className="text-sm font-bold">
+        Chat history
+      </h3>
+      <p className="mt-1 text-xs opacity-55">
+        Your previous conversations
+      </p>
     </div>
 
     <button
-      title="Delete Chat"
-      onClick={(e) =>
-        handleDeleteChat(
-          e,
-          s.chat_id
-        )
-      }
-
+      type="button"
+      onClick={() => setDesktopHistoryOpen(false)}
+      aria-label="Close chat history"
       className="
-        opacity-0
-        group-hover:opacity-100
-        transition
-        ml-2
-        p-1
-        rounded-lg
-        hover:bg-black/10
+        flex h-9 w-9 items-center justify-center
+        rounded-xl border transition
+        hover:bg-[var(--primary)]/10
+        active:scale-95
       "
+      style={{ borderColor: "var(--border)" }}
     >
-      <Trash2 size={16} />
+      <X size={17} />
     </button>
-
   </div>
 
-))}
+  <button
+    type="button"
+    onClick={() => {
+      newChat();
+      setDesktopHistoryOpen(false);
+    }}
+    className="
+      mb-5 flex w-full items-center justify-center
+      gap-2 rounded-xl px-4 py-3
+      text-sm font-semibold
+      transition-all duration-200
+      hover:brightness-110 active:scale-[0.98]
+    "
+    style={{
+      background: "var(--primary)",
+      color: "var(--bg)",
+    }}
+  >
+    <span className="text-lg leading-none">+</span>
+    New Chat
+  </button>
 
+  <div className="
+    min-h-0 flex-1 space-y-2
+    overflow-y-auto pr-1 custom-scrollbar
+  ">
+    {sessions.length === 0 ? (
+      <div className="px-3 py-8 text-center">
+        <p className="text-sm opacity-55">
+          No conversations yet
+        </p>
+      </div>
+    ) : (
+      sessions.map((s) => (
+        <div
+          key={s.chat_id}
+          onClick={() => {
+            if (
+              s.chat_id === chatId ||
+              chatLoading
+            ) return;
+
+            setDesktopHistoryOpen(false);
+
+            router.push(
+              `${chatBasePath}/${s.chat_id}`
+            );
+          }}
+          className={`
+            group flex w-full cursor-pointer
+            items-center justify-between gap-2
+            rounded-xl border p-3
+            transition-all duration-200
+            ${
+              chatId === s.chat_id
+                ? "border-transparent"
+                : "hover:bg-[var(--primary)]/5"
+            }
+          `}
+          style={
+            chatId === s.chat_id
+              ? {
+                  background: "var(--primary)",
+                  color: "var(--bg)",
+                }
+              : {
+                  background: "var(--card)",
+                  borderColor: "var(--border)",
+                }
+          }
+        >
+          <span className="
+            min-w-0 flex-1 truncate
+            text-sm font-medium
+          ">
+            {s.title}
+          </span>
+
+          <button
+            type="button"
+            title="Delete Chat"
+            aria-label="Delete chat"
+            onClick={(e) =>
+              handleDeleteChat(e, s.chat_id)
+            }
+            className="
+              shrink-0 rounded-lg p-1.5
+              opacity-0 transition
+              hover:bg-red-500/10 hover:text-red-500
+              group-hover:opacity-100
+              focus:opacity-100
+            "
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
+      ))
+    )}
+  </div>
 </div>
-</div>
+
+{/* DESKTOP DRAWER BACKDROP */}
+
+{desktopHistoryOpen && (
+  <button
+    type="button"
+    aria-label="Close chat history"
+    onClick={() => setDesktopHistoryOpen(false)}
+    className="
+      absolute inset-0 z-[99]
+      hidden md:block
+      cursor-default bg-black/25
+      backdrop-blur-[2px]
+    "
+  />
+)}
+
 {deleteModalOpen && (
 
   <div
@@ -844,22 +903,17 @@ router.push(
 
   }}
 
-  className={`
+   className={`
     md:hidden
-
     fixed
-    top-0
+    inset-y-0
     left-0
-
-    h-full
-    w-60
-
+    h-[100dvh]
+    w-[min(19rem,85vw)]
     z-[998]
-
     flex
     flex-col
-
-    p-5
+    p-4
 
     transition-transform
     duration-300
@@ -874,7 +928,10 @@ router.push(
   `}
 >
   <button
-    onClick={newChat}
+    onClick={() => {
+  newChat();
+  setMobileHistoryOpen(false);
+}}
     className="
       bg-lime-400
       text-black
@@ -925,16 +982,16 @@ router.push(
           cursor-pointer
 
           ${
-            chatId === s.chat_id
-              ? `
-                bg-lime-400
-                text-black
-                border-lime-400
-              `
-              : `
-                ${styles.card}
-                hover:bg-white/5
-              `
+                  chatId === s.chat_id
+        ? `
+          bg-[var(--primary)]
+          text-[var(--bg)]
+          border-transparent
+        `
+        : `
+          ${styles.card}
+          hover:brightness-95
+        `
           }
         `}
       >
@@ -975,251 +1032,172 @@ router.push(
 )}
 
       {/* MAIN */}
-<div className="
-  flex-1
-  flex
-  flex-col
-  overflow-hidden
-  relative
-">
+<div
+  className="
+    relative
+    flex min-h-0 min-w-0
+    flex-1 flex-col
+    overflow-hidden
+  "
+>
 {/* TOP BAR */}
 
 {selectedDoc && totalPages > 1 && (
-
-<div
-  className="
-  border-b
-  border-white/10
-
-  px-6
-  py-3
-
-  flex
-  flex-col
-  gap-3
-"
->
-  {/* PAGE RANGE */}
-
-  {selectedDoc && totalPages > 1 && (
-
-<div className="
-  w-full
-">
-<div className="
-  flex
-  items-center
-  justify-between
-  mb-1
-">
-<div className="
-  relative
-  flex
-  items-center
-  justify-between
-">
-
-  {/* MOBILE HISTORY TOGGLE */}
-
-  <button
-    onClick={() =>
-      setMobileHistoryOpen(
-        !mobileHistoryOpen
-      )
-    }
+  <div
     className="
-      md:hidden
-
-      absolute
-      -left-6
-      top-3
-
-      -translate-y-1/2
-
-      w-7
-      h-10
-
-      rounded-r-lg
-
-      flex
-      items-center
-      justify-center
-
-      bg-lime-400/20
-      text-lime-400
-
-      border
-      border-lime-400/20
-
-      z-20
+      border-b border-white/10
+      px-3 sm:px-6
+      py-4
     "
   >
-    {mobileHistoryOpen
-      ? <ChevronLeft size={16}/>
-      : <ChevronRight size={16}/>
-    }
-  </button>
-
-  <div className="
-    flex
-    items-center
-    gap-2
-    ml-2
-    pl-3
-    md:pl-0
-  ">
-
-  <span
-    className="
-      text-xs
-    text-lime-400
-      uppercase
-      font-bold
-      tracking-wide
-    "
-  >
-    Focus Range
-  </span>
-    <span className="
-      text-xs
-      text-lime-400
-      font-medium
-      opacity-90
+    <div className="
+      flex items-stretch gap-2 sm:gap-3
     ">
-      Pages {startPage}-{endPage}
-    </span>
 
-<span
-  className="
-    text-[11px]
-    opacity-70
-  "
->
-  {endPage - startPage + 1}
-  {" "}
-  {(endPage - startPage + 1) === 1
-    ? "page"
-    : "pages"}
-  {" "}
-  selected • {totalPages} total
-</span>
-  </div>
-</div>
-  <button
-    onClick={() => {
-      setStartPage(1);
-      setEndPage(totalPages);
-    }}
-    className="
-      text-xs
-      px-2
-      py-1
-      rounded-md
-      bg-lime-400/20
-      hover:bg-lime-400/30
-      "
-      >
-    Full PDF
-  </button>
+      {/* FOCUS RANGE + SLIDER AREA */}
 
-</div>
-<div className="
-  ml-4
-  md:ml-0
-">
+      <div className="
+        flex min-w-0 flex-1
+        flex-col justify-center gap-3
+      ">
 
-<Range
-        step={1}
-        min={1}
-        max={sliderMax}
-        values={[
-          startPage,
-          endPage
-        ]}
+        {/* FOCUS RANGE HEADER */}
 
-        onChange={(values) => {
+        <div className="
+          flex min-w-0
+          items-center justify-between gap-2
+        ">
 
-          setStartPage(
-            values[0]
-          );
+          {/* FOCUS RANGE LABELS */}
 
-          setEndPage(
-            values[1]
-          );
+          <div className="
+            flex min-w-0 flex-wrap
+            items-center gap-x-2 gap-y-1
+          ">
+            <span className="
+              text-xs text-lime-400
+              uppercase font-bold tracking-wide
+            ">
+              Focus Range
+            </span>
 
-        }}
+            <span className="
+              text-xs text-lime-400
+              font-medium opacity-90
+            ">
+              Pages {startPage}-{endPage}
+            </span>
 
-        renderTrack={({
-          props,
-          children
-        }) => (
-          <div
-            {...props}
-            style={{
-              ...props.style,
-              height: "4px",
-              width: "100%",
-              borderRadius: "999px",
-              background:
-                getTrackBackground({
-                  values: [
-                    startPage,
-                    endPage
-                  ],
-                  colors: [
-                    "#374151",
-                    "#84cc16",
-                    "#374151"
-                  ],
-                  min: 1,
-                  max: sliderMax,
-                }),
-            }}
-          >
-            {children}
+            <span className="
+              text-[11px] opacity-70
+            ">
+              {endPage - startPage + 1}
+              {" "}
+              {(endPage - startPage + 1) === 1
+                ? "page"
+                : "pages"}
+              {" "}
+              selected • {totalPages} total
+            </span>
           </div>
 
-)}
+          {/* FULL PDF */}
 
-renderThumb={({ props }) => {
+          <button
+            type="button"
+            onClick={() => {
+              setStartPage(1);
+              setEndPage(totalPages);
+            }}
+            className="
+              shrink-0 text-xs
+              px-2 py-1 rounded-md
+              bg-lime-400/20
+              hover:bg-lime-400/30
+              transition
+            "
+          >
+            Full PDF
+          </button>
 
-  const {
-    key,
-    ...thumbProps
-  } = props as any;
+        </div>
 
-  return (
-    <div
-      key={key}
-      {...thumbProps}
-      className="
-        h-5
-        w-5
-        rounded-full
-        bg-lime-400
-        shadow-lg
-        border-2
-        border-black
-      "
-    />
-  );
-}}
-      />
-</div>
-      <div className="
-        mt-1
-        text-[11px]
-        opacity-60
-      ">
+        {/* RANGE SLIDER */}
+
+        <div className="w-full min-w-0">
+
+          <Range
+            step={1}
+            min={1}
+            max={sliderMax}
+            minDistance={1}
+            values={[startPage, endPage]}
+            onChange={(values) => {
+              setStartPage(values[0]);
+              setEndPage(values[1]);
+            }}
+            renderTrack={({ props, children }) => (
+              <div
+                {...props}
+                style={{
+                  ...props.style,
+                  height: "6px",
+                  width: "100%",
+                  borderRadius: "999px",
+                  background: getTrackBackground({
+                    values: [startPage, endPage],
+                    colors: [
+                      "#374151",
+                      "#84cc16",
+                      "#374151",
+                    ],
+                    min: 1,
+                    max: sliderMax,
+                  }),
+                }}
+              >
+                {children}
+              </div>
+            )}
+            renderThumb={({ props, index }) => {
+              const {
+                key,
+                ...thumbProps
+              } = props as any;
+
+              return (
+                <div
+                  key={key}
+                  {...thumbProps}
+                  style={{
+                    ...thumbProps.style,
+                    marginLeft: index === 0 ? -5 : 5,
+                  }}
+                  className="
+                    h-5 w-5
+                    rounded-full
+                    bg-lime-400
+                    shadow-lg
+                    border-2 border-black
+                    ring-2 ring-lime-400/20
+                    cursor-grab
+                    active:cursor-grabbing
+                  "
+                />
+              );
+            }}
+          />
+
+        </div>
 
       </div>
 
     </div>
-
-  )}
-
-</div>
+  </div>
 )}
+
+{/* CHAT */}
+
         {/* CHAT */}
 <div
   onTouchStart={(e) => {
@@ -1249,9 +1227,9 @@ renderThumb={({ props }) => {
   }}
 
   className="
-    flex-1
+    min-h-0 flex-1
     overflow-y-auto
-  custom-scrollbar
+    custom-scrollbar
   px-4
   py-6
   pb-2
@@ -1261,7 +1239,7 @@ renderThumb={({ props }) => {
   isolate
 ">
 
-{showLoader && (
+{chatLoading && (
 
   <div
     className="
@@ -1363,19 +1341,23 @@ renderThumb={({ props }) => {
   </div>
 
 )}
-        <div className="
-  max-w-4xl
-  mx-auto
-">
+                <div
+          className="
+            mx-auto w-full
+            max-w-[1100px]
+            px-1 sm:px-2
+          "
+        >
             {messages.length === 0 && (
 
-              <div className="
-                h-[70vh]
-                flex
-                items-center
-                justify-center
-                text-center
-              ">
+                            <div
+                className="
+                  flex min-h-[55vh] w-full
+                  items-center justify-center
+                  px-3 py-12 text-center
+                  sm:min-h-[60vh]
+                "
+              >
 
                 <div>
 
@@ -1429,17 +1411,15 @@ renderThumb={({ props }) => {
 {/* INPUT + DOC POPUP WRAPPER */}
 <div
   className="
-  sticky
-  bottom-0
-
-  z-40
-
-  pb-4
-  pt-3
-
-  bg-black/10
-  backdrop-blur-xl
+    sticky bottom-0 z-40
+    border-t px-3 pb-3 pt-3
+    backdrop-blur-xl
+    sm:px-5 sm:pb-5
   "
+  style={{
+    background: "var(--bg)",
+    borderColor: "var(--border)",
+  }}
 >
 
  <div
@@ -1464,16 +1444,18 @@ renderThumb={({ props }) => {
 
       rounded-xl
 
-      border
-      border-white/10
-
-      bg-black/80
+            border
       backdrop-blur-xl
 
       shadow-2xl
 
       overflow-hidden
       "
+             style={{
+         background: "var(--card)",
+         borderColor: "var(--border)",
+         color: "var(--text)",
+       }}
     >
 
       <div
@@ -1481,11 +1463,11 @@ renderThumb={({ props }) => {
         px-4
         py-3
         border-b
-        border-white/10
         flex
         items-center
         justify-between
         "
+              style={{ borderColor: "var(--border)" }}  
       >
 
         <span className="font-semibold">
@@ -1675,112 +1657,69 @@ renderThumb={({ props }) => {
 
   {/* INPUT BAR */}
 
+   {/* INPUT BAR */}
+
   <div
-className="
-pointer-events-auto
-
-flex
-items-end
-
-gap-3
-
-w-full
-max-w-[900px]
-
-mx-auto
-
-px-4
-py-2
-
-min-h-[56px]
-max-h-[220px]
-
-rounded-[32px]
-
-bg-black/40
-backdrop-blur-3xl
-
-border
-border-white/5
-
-shadow-[0_8px_40px_rgba(0,0,0,.45)]
-
-transition-all
-duration-200
-"
+    className="
+      flex w-full min-w-0 items-end gap-2
+      rounded-2xl border p-2
+      shadow-lg
+      transition-all duration-200
+      focus-within:ring-2
+      focus-within:ring-[var(--primary)]/20
+    "
+    style={{
+      background: "var(--card)",
+      borderColor: "var(--border)",
+      color: "var(--text)",
+    }}
   >
 
-    {/* Document Button */}
+      {/* DOCUMENT BUTTON */}
 
     <button
       ref={docBtnRef}
-      onClick={() => setShowDocs(!showDocs)}
+      type="button"
+      onClick={() => setShowDocs((prev) => !prev)}
+      aria-label="Select document"
+      aria-expanded={showDocs}
       className="
-      h-10
-      w-10
-self-end
-      rounded-full
-
-      bg-white/10
-      hover:bg-white/20
-
-      flex
-      items-center
-      justify-center
-
-      shrink-0
+        flex h-10 w-10 shrink-0 items-center
+        justify-center rounded-xl
+        transition-all duration-200
+        hover:bg-[var(--primary)]/10
+        active:scale-95
       "
+      style={{ color: "var(--primary)" }}
     >
-      <FileText
-        size={18}
-        className={
-          selectedDoc
-            ? "text-lime-400"
-            : "text-white"
-        }
-      />
+      <FileText size={19} />
     </button>
 
-    {/* TEXTAREA */}
+       {/* TEXTAREA */}
 
     <textarea
       ref={textareaRef}
       value={input}
       placeholder="Ask questions from your documents..."
+      rows={1}
       onScroll={handleTextareaScroll}
       onChange={(e) => setInput(e.target.value)}
       onKeyDown={(e) => {
-        if (
-          e.key === "Enter" &&
-          !e.shiftKey
-        ) {
+        if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
           handleSend();
         }
       }}
-className={`
-flex-1
-
-resize-none
-bg-transparent
-outline-none
-
-text-[15px]
-
-leading-[24px]
-
-min-h-[24px]
-max-h-[140px]
-
-pt-[8px]
-pb-[8px]
-
-overflow-y-auto
-
-custom-scrollbar
-
-placeholder:text-white/45
-`}
+      className="
+        min-h-[40px] max-h-[140px]
+        min-w-0 flex-1 resize-none
+        bg-transparent px-1 py-2
+        text-sm leading-6
+        text-[var(--text)]
+        outline-none
+        placeholder:opacity-45
+        overflow-y-auto custom-scrollbar
+      "
     />
 
     {/* SEND */}
@@ -1789,22 +1728,18 @@ placeholder:text-white/45
       onClick={handleSend}
       disabled={loading}
       className="
-      h-10
-      w-10
-
-      rounded-full
-
-      bg-lime-400
-      text-black
-
-      hover:bg-lime-300
-
-      flex
-      items-center
-      justify-center
-
-      shrink-0
-      "
+  flex h-10 w-10 shrink-0 items-center
+  justify-center rounded-xl
+  transition-all duration-200
+  hover:brightness-95
+  active:scale-95
+  disabled:cursor-not-allowed
+  disabled:opacity-50
+"
+style={{
+  background: "var(--primary)",
+  color: "var(--bg)",
+}}
     >
       <ArrowUp size={18} />
     </button>
