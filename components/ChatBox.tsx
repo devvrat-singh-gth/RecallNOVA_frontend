@@ -1130,7 +1130,6 @@ router.push(
             step={1}
             min={1}
             max={sliderMax}
-            minDistance={1}
             values={[startPage, endPage]}
             onChange={(values) => {
               setStartPage(values[0]);
