@@ -537,7 +537,6 @@ export async function checkQuiz(
   return data;
 }
 
-
 export async function saveQuizProgress(
   data: unknown
 ) {
