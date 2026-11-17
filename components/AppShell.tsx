@@ -29,7 +29,7 @@ export default function AppShell({
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute access="both">
       <div className="flex h-screen">
         {/* Desktop Sidebar */}
         <div className="hidden md:flex">
